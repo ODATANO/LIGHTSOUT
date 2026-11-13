@@ -1,0 +1,510 @@
+{
+ "call": {
+  "signer": "b7adbc79858ed19dcc101002b64ac555c51da392d1a58486aa87f915820e82f6",
+  "receiver": "v2.nightshade-probe.testnet",
+  "method": "submit_attestation"
+ },
+ "txHash": "2NK6aVsQbZxaDHtoDBhAkFUU3EjMWHd4r6FAgAm58Dri",
+ "receipt": {
+  "id": "ET93C1Y2ZMxcgmHHRYDK79bymLS3AybonCz8sX8xXy14",
+  "height": 275757661,
+  "logs": [
+   "EVENT_JSON:{\"standard\":\"nightshade_bridge\",\"version\":\"1.0.0\",\"event\":\"attestation_rejected\",\"data\":{\"account\":\"b7adbc79858ed19dcc101002b64ac555c51da392d1a58486aa87f915820e82f6\",\"reason\":\"the quote does not bind the submitting key\"}}"
+  ]
+ },
+ "blocks": {
+  "275757658": {
+   "header": {
+    "height": 275757658,
+    "hash": "45kyxeiXibTan8mVkvWKAcRhf4jwQtfsRMvHmZU66exS"
+   },
+   "chunks": [
+    {
+     "chunk_hash": "D5w2rXFWYqV4YtkBTwdv5TZXgYMMuiffKeMuS2AiGJV7",
+     "shard_id": 10,
+     "height_included": 275757658
+    },
+    {
+     "chunk_hash": "44ZG1ZZzxnPUkZzoVgpsgXUNvpDuRBpRYsk3f7aThZi1",
+     "shard_id": 11,
+     "height_included": 275757658
+    },
+    {
+     "chunk_hash": "86WevhTuD61GKyUAwcDyRfspocXfuRBT23Rr3EaUsT8a",
+     "shard_id": 1,
+     "height_included": 275757658
+    },
+    {
+     "chunk_hash": "33rhhELSYmTdJyoDSk5ZUMJuiXdRd8V1mZTczcyAdGpC",
+     "shard_id": 12,
+     "height_included": 275757658
+    },
+    {
+     "chunk_hash": "8mqF7M2pqZ9cejzmGp9Jzf4eFmnA8xsBV1Jyq3PxHKAz",
+     "shard_id": 13,
+     "height_included": 275757658
+    },
+    {
+     "chunk_hash": "61VraFtyqXnmg5oB13BrEivyvirdNdKUiJmhQiWNxqtg",
+     "shard_id": 9,
+     "height_included": 275757658
+    },
+    {
+     "chunk_hash": "GBsKmCHTmqHkWHNt9t9xfd1PLmAULN4jm9mnhmodo4EW",
+     "shard_id": 6,
+     "height_included": 275757658
+    },
+    {
+     "chunk_hash": "3Z3DJ2szpvbYb2a4uFwCnYmzujt83cmF38CRtBGTnXpc",
+     "shard_id": 7,
+     "height_included": 275757658
+    },
+    {
+     "chunk_hash": "6FgjNJPZfZXf5VQt6M8nEAQPkkCeR1j75hDtgSqiv7Bw",
+     "shard_id": 4,
+     "height_included": 275757658
+    },
+    {
+     "chunk_hash": "4dQctKLuttTfEtZuKHdLcvG3xB6JoY1nfFJbkPrZpeXX",
+     "shard_id": 5,
+     "height_included": 275757658
+    }
+   ]
+  },
+  "275757659": {
+   "header": {
+    "height": 275757659,
+    "hash": "Ary4AkXTCQ4B23efcv1uFJ17or4RVBCXs5kiHqQHqCQ1"
+   },
+   "chunks": [
+    {
+     "chunk_hash": "4yNBvCVs65k5jUemRRQ6jy6PD1EmyicUxmLAHSdPjqC3",
+     "shard_id": 10,
+     "height_included": 275757659
+    },
+    {
+     "chunk_hash": "AZBXGiyakcYmpLAxp6KNGdia4BdoS6f4ghDMVDhqZL7g",
+     "shard_id": 11,
+     "height_included": 275757659
+    },
+    {
+     "chunk_hash": "D2n8SPdfprb5VR7vy6Tkyio5kx3xLJqAtN5hXupZRuN7",
+     "shard_id": 1,
+     "height_included": 275757659
+    },
+    {
+     "chunk_hash": "33DVBUihpMfop9gE8MiCRHqq51JMmnYiH339JahPvg5h",
+     "shard_id": 12,
+     "height_included": 275757659
+    },
+    {
+     "chunk_hash": "D7WCU3VyNF6jRbvCbGnCdP4fWbfbmS1nd1MnpVYjViHe",
+     "shard_id": 13,
+     "height_included": 275757659
+    },
+    {
+     "chunk_hash": "9xR31hzb7pCC1a3WtU8igV5xfMSDzVVWxDTgJRixmVC4",
+     "shard_id": 9,
+     "height_included": 275757659
+    },
+    {
+     "chunk_hash": "BZbZZWdiqoxiSPoLoA9mRb1sCsuTG1m8KyWy42EfcSAV",
+     "shard_id": 6,
+     "height_included": 275757659
+    },
+    {
+     "chunk_hash": "DobvzVMzznNtY5BKZtdzYG9DBKjVXAzgzfXGYq8NcgCT",
+     "shard_id": 7,
+     "height_included": 275757659
+    },
+    {
+     "chunk_hash": "2tuu49NXMgUC468de2yStxt9inWr1TKw6kwkje1dCB5u",
+     "shard_id": 4,
+     "height_included": 275757659
+    },
+    {
+     "chunk_hash": "C9otWiGSnsfnDhUZPdL93u3NhJ5fNXy5KrLS61CSxjNP",
+     "shard_id": 5,
+     "height_included": 275757659
+    }
+   ]
+  },
+  "275757660": {
+   "header": {
+    "height": 275757660,
+    "hash": "C3kxpgWLjayXVxZUXRiVMqpr27d9df691BXnaYEFxkBn"
+   },
+   "chunks": [
+    {
+     "chunk_hash": "H2YkTty4Yfrut1JZvcyHw6hWFgGJEGz2KjB1w8q1DcQ3",
+     "shard_id": 10,
+     "height_included": 275757660
+    },
+    {
+     "chunk_hash": "CV8rJxNWcCVKepX5xnGHkYzE6uUM3nY3ZEduPwnwaaR1",
+     "shard_id": 11,
+     "height_included": 275757660
+    },
+    {
+     "chunk_hash": "EYxkqb8XBKCT4bLBWnfZXihkMaLVK8tiFCePob2mv1Fr",
+     "shard_id": 1,
+     "height_included": 275757660
+    },
+    {
+     "chunk_hash": "4jrcs3FZsFCN8RmLRVRdBMhmbUAKqFPzgoDieQv3EVpi",
+     "shard_id": 12,
+     "height_included": 275757660
+    },
+    {
+     "chunk_hash": "nUM4zvbfXTNTKcdtUw6A7GbCzr9dWWzSRisr1fZHTDw",
+     "shard_id": 13,
+     "height_included": 275757660
+    },
+    {
+     "chunk_hash": "BtqPURUzmRpapZG4GeU8WamSfZ8FUyNHaqKt36juYAKV",
+     "shard_id": 9,
+     "height_included": 275757660
+    },
+    {
+     "chunk_hash": "DwuamNYk3UTJcDhJEo7PobKXwT3LxBFdiB9RzisiDebw",
+     "shard_id": 6,
+     "height_included": 275757660
+    },
+    {
+     "chunk_hash": "6xHiFRbTn8yaDqy1LR6Fa2LxYukrZPQn1BCJvYBzDE41",
+     "shard_id": 7,
+     "height_included": 275757660
+    },
+    {
+     "chunk_hash": "Eo2KwEp72q5p6eNvLuFGWH267KpaCZwHyCWU9Ake2x9L",
+     "shard_id": 4,
+     "height_included": 275757660
+    },
+    {
+     "chunk_hash": "FAhgFrjz2aTUfvGLzmhorbEm2xax9N3vQ8BRC5G7MJqv",
+     "shard_id": 5,
+     "height_included": 275757660
+    }
+   ]
+  },
+  "275757661": {
+   "header": {
+    "height": 275757661,
+    "hash": "ESF6BC6h9QDD5iKcE5deyt2TSbTytevj4e5AX9VTW8DQ"
+   },
+   "chunks": [
+    {
+     "chunk_hash": "6Bu3MgrPzkhrW4oFFTtpoav2qF47By3WbaTLbYLNUdeB",
+     "shard_id": 10,
+     "height_included": 275757661
+    },
+    {
+     "chunk_hash": "7aQnpEkhmjd8eGxLaVQ9HDhgVHSk3fLLGGiKGa5hc88T",
+     "shard_id": 11,
+     "height_included": 275757661
+    },
+    {
+     "chunk_hash": "ASKvGrtUd4N8by6R7wwsZA28aDa4ay8x85oCKEsFYzU4",
+     "shard_id": 1,
+     "height_included": 275757661
+    },
+    {
+     "chunk_hash": "3c7A7iMLTfGRoZSJJ55oMC8tdQZjJiM9ex9h9TDBNdWF",
+     "shard_id": 12,
+     "height_included": 275757661
+    },
+    {
+     "chunk_hash": "F8kUdznRBdnZh4w4P5L2MX5a1KA7DqHH5kv7KrJ81j5V",
+     "shard_id": 13,
+     "height_included": 275757661
+    },
+    {
+     "chunk_hash": "8jqWzTjwo1v8wF52n7d5gx8zJE6RGHGRQQxQYpfy44Yv",
+     "shard_id": 9,
+     "height_included": 275757661
+    },
+    {
+     "chunk_hash": "Bzi1w8yHWBFqvYTqLruPiJLHwjqtTHFUSnTXZb4SuGdB",
+     "shard_id": 6,
+     "height_included": 275757661
+    },
+    {
+     "chunk_hash": "fQEgWXEwXzFMj2FAdLeqgy6ZsSM8JNAZpVArZhumaHJ",
+     "shard_id": 7,
+     "height_included": 275757661
+    },
+    {
+     "chunk_hash": "AHxsromCqbeMWSQCN6AZySUgw9r9Efr484exk9odWE5f",
+     "shard_id": 4,
+     "height_included": 275757661
+    },
+    {
+     "chunk_hash": "FhNAuUv6hVvQn7qAbQpJ12DzfuNCud5N745Usj4xnwAX",
+     "shard_id": 5,
+     "height_included": 275757661
+    }
+   ]
+  }
+ },
+ "chunks": {
+  "6Bu3MgrPzkhrW4oFFTtpoav2qF47By3WbaTLbYLNUdeB": {
+   "transactions": []
+  },
+  "7aQnpEkhmjd8eGxLaVQ9HDhgVHSk3fLLGGiKGa5hc88T": {
+   "transactions": []
+  },
+  "ASKvGrtUd4N8by6R7wwsZA28aDa4ay8x85oCKEsFYzU4": {
+   "transactions": []
+  },
+  "3c7A7iMLTfGRoZSJJ55oMC8tdQZjJiM9ex9h9TDBNdWF": {
+   "transactions": []
+  },
+  "F8kUdznRBdnZh4w4P5L2MX5a1KA7DqHH5kv7KrJ81j5V": {
+   "transactions": []
+  },
+  "8jqWzTjwo1v8wF52n7d5gx8zJE6RGHGRQQxQYpfy44Yv": {
+   "transactions": []
+  },
+  "Bzi1w8yHWBFqvYTqLruPiJLHwjqtTHFUSnTXZb4SuGdB": {
+   "transactions": []
+  },
+  "fQEgWXEwXzFMj2FAdLeqgy6ZsSM8JNAZpVArZhumaHJ": {
+   "transactions": []
+  },
+  "AHxsromCqbeMWSQCN6AZySUgw9r9Efr484exk9odWE5f": {
+   "transactions": []
+  },
+  "FhNAuUv6hVvQn7qAbQpJ12DzfuNCud5N745Usj4xnwAX": {
+   "transactions": []
+  },
+  "H2YkTty4Yfrut1JZvcyHw6hWFgGJEGz2KjB1w8q1DcQ3": {
+   "transactions": []
+  },
+  "CV8rJxNWcCVKepX5xnGHkYzE6uUM3nY3ZEduPwnwaaR1": {
+   "transactions": []
+  },
+  "EYxkqb8XBKCT4bLBWnfZXihkMaLVK8tiFCePob2mv1Fr": {
+   "transactions": []
+  },
+  "4jrcs3FZsFCN8RmLRVRdBMhmbUAKqFPzgoDieQv3EVpi": {
+   "transactions": []
+  },
+  "nUM4zvbfXTNTKcdtUw6A7GbCzr9dWWzSRisr1fZHTDw": {
+   "transactions": []
+  },
+  "BtqPURUzmRpapZG4GeU8WamSfZ8FUyNHaqKt36juYAKV": {
+   "transactions": []
+  },
+  "DwuamNYk3UTJcDhJEo7PobKXwT3LxBFdiB9RzisiDebw": {
+   "transactions": []
+  },
+  "6xHiFRbTn8yaDqy1LR6Fa2LxYukrZPQn1BCJvYBzDE41": {
+   "transactions": []
+  },
+  "Eo2KwEp72q5p6eNvLuFGWH267KpaCZwHyCWU9Ake2x9L": {
+   "transactions": [
+    {
+     "hash": "67w2Keyujk6EQuAFuK63nf7S2ezgtEUgTBVZXRhiYx5E",
+     "signer_id": "testnet",
+     "receiver_id": "scrim-t-out-mvxw7i284zyr.testnet",
+     "actions": [
+      "CreateAccount",
+      {
+       "Transfer": {}
+      },
+      {
+       "AddKey": {}
+      }
+     ]
+    }
+   ]
+  },
+  "FAhgFrjz2aTUfvGLzmhorbEm2xax9N3vQ8BRC5G7MJqv": {
+   "transactions": []
+  },
+  "4yNBvCVs65k5jUemRRQ6jy6PD1EmyicUxmLAHSdPjqC3": {
+   "transactions": []
+  },
+  "AZBXGiyakcYmpLAxp6KNGdia4BdoS6f4ghDMVDhqZL7g": {
+   "transactions": [
+    {
+     "hash": "DHAhtBuKhW3VPm251k5tgU8PE8TDGdRbmFhqjCS5Zbo1",
+     "signer_id": "atlas.loca-swarm-mvwu8dfo.testnet",
+     "receiver_id": "market.loca-swarm-mvwu8dfo.testnet",
+     "actions": [
+      {
+       "FunctionCall": {
+        "method_name": "request_credit"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  "D2n8SPdfprb5VR7vy6Tkyio5kx3xLJqAtN5hXupZRuN7": {
+   "transactions": []
+  },
+  "33DVBUihpMfop9gE8MiCRHqq51JMmnYiH339JahPvg5h": {
+   "transactions": []
+  },
+  "D7WCU3VyNF6jRbvCbGnCdP4fWbfbmS1nd1MnpVYjViHe": {
+   "transactions": []
+  },
+  "9xR31hzb7pCC1a3WtU8igV5xfMSDzVVWxDTgJRixmVC4": {
+   "transactions": []
+  },
+  "BZbZZWdiqoxiSPoLoA9mRb1sCsuTG1m8KyWy42EfcSAV": {
+   "transactions": []
+  },
+  "DobvzVMzznNtY5BKZtdzYG9DBKjVXAzgzfXGYq8NcgCT": {
+   "transactions": []
+  },
+  "2tuu49NXMgUC468de2yStxt9inWr1TKw6kwkje1dCB5u": {
+   "transactions": []
+  },
+  "C9otWiGSnsfnDhUZPdL93u3NhJ5fNXy5KrLS61CSxjNP": {
+   "transactions": []
+  },
+  "D5w2rXFWYqV4YtkBTwdv5TZXgYMMuiffKeMuS2AiGJV7": {
+   "transactions": []
+  },
+  "44ZG1ZZzxnPUkZzoVgpsgXUNvpDuRBpRYsk3f7aThZi1": {
+   "transactions": []
+  },
+  "86WevhTuD61GKyUAwcDyRfspocXfuRBT23Rr3EaUsT8a": {
+   "transactions": []
+  },
+  "33rhhELSYmTdJyoDSk5ZUMJuiXdRd8V1mZTczcyAdGpC": {
+   "transactions": [
+    {
+     "hash": "2NK6aVsQbZxaDHtoDBhAkFUU3EjMWHd4r6FAgAm58Dri",
+     "signer_id": "b7adbc79858ed19dcc101002b64ac555c51da392d1a58486aa87f915820e82f6",
+     "receiver_id": "v2.nightshade-probe.testnet",
+     "actions": [
+      {
+       "FunctionCall": {
+        "method_name": "submit_attestation"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  "8mqF7M2pqZ9cejzmGp9Jzf4eFmnA8xsBV1Jyq3PxHKAz": {
+   "transactions": []
+  },
+  "61VraFtyqXnmg5oB13BrEivyvirdNdKUiJmhQiWNxqtg": {
+   "transactions": []
+  },
+  "GBsKmCHTmqHkWHNt9t9xfd1PLmAULN4jm9mnhmodo4EW": {
+   "transactions": []
+  },
+  "3Z3DJ2szpvbYb2a4uFwCnYmzujt83cmF38CRtBGTnXpc": {
+   "transactions": []
+  },
+  "6FgjNJPZfZXf5VQt6M8nEAQPkkCeR1j75hDtgSqiv7Bw": {
+   "transactions": []
+  },
+  "4dQctKLuttTfEtZuKHdLcvG3xB6JoY1nfFJbkPrZpeXX": {
+   "transactions": []
+  }
+ },
+ "status": {
+  "transaction": {
+   "hash": "2NK6aVsQbZxaDHtoDBhAkFUU3EjMWHd4r6FAgAm58Dri",
+   "signer_id": "b7adbc79858ed19dcc101002b64ac555c51da392d1a58486aa87f915820e82f6",
+   "receiver_id": "v2.nightshade-probe.testnet",
+   "actions": [
+    {
+     "FunctionCall": {
+      "method_name": "submit_attestation"
+     }
+    }
+   ]
+  },
+  "receipts_outcome": [
+   {
+    "id": "EQCK84Z5NLMFAaWMSKAqbfzqtdeEbxGwPHG3oastkviM",
+    "block_hash": "Ary4AkXTCQ4B23efcv1uFJ17or4RVBCXs5kiHqQHqCQ1",
+    "outcome": {
+     "executor_id": "v2.nightshade-probe.testnet",
+     "logs": [],
+     "receipt_ids": [
+      "FyMZ5uVGKPpUnZ18McCiK8w2KmbdVPZeWwrUJH74MbAU",
+      "ET93C1Y2ZMxcgmHHRYDK79bymLS3AybonCz8sX8xXy14",
+      "9xyAZKnzJxM7kz5iuQkVhF7G6U2SVke2Spy7knVP36Ld"
+     ],
+     "status": {
+      "SuccessReceiptId": "ET93C1Y2ZMxcgmHHRYDK79bymLS3AybonCz8sX8xXy14"
+     }
+    }
+   },
+   {
+    "id": "FyMZ5uVGKPpUnZ18McCiK8w2KmbdVPZeWwrUJH74MbAU",
+    "block_hash": "C3kxpgWLjayXVxZUXRiVMqpr27d9df691BXnaYEFxkBn",
+    "outcome": {
+     "executor_id": "tee-verifier-2026-07-22.testnet",
+     "logs": [],
+     "receipt_ids": [
+      "CnrF6ZRTckHtTMRD4mLxKKSrkJAZJzRigk9iqGeD3hES"
+     ],
+     "status": {
+      "SuccessValue": "AAgAAABVcFRvRGF0ZQAAAAABCwEFAAAAAAAAAAAAAAAAAHvwYygOlPsFH13XsfxZzpqsQruWHfjUS3Ccmw/4entN9khle6bRGJWJ/qsdWjyanQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAHAgAAAAAAACpnQyfFAhjbqIAGazSbjVWddJ7Wjc4z/WUcGEqHfQhLB6nlg3Z6etXaE+2R3uwrcAGCQXvVWMsPZnhciY/d5f89ve1Ru8VCQH1ZalDki1g2JQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGgQLntSSvMQ97fUJs51SB42xA9dUTqQCcBG6dN+MVUfATTZVLSWozV/1h0D8H/+lonvhsUSW5hsMl8KlKz6h3GKTvOk1PI327ct2jz3d/0sBUVV+0QH61MzjX1nMppzM+kADjOPMyM+j1G3/QMeHBWL3PhXLqsEHAvI63/vSLIyWaalVubI4q+ZmZ/DnHkxeSP4BdrJnj7vltkQFFYmV8sO8c2NgCuzLUsP2OAxXIW1krRbUA9XQ9awVb1lzF2XLAcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcQAAAAPjBuEzt/2qe7efZ2NMtSDAAAAAAAAAAAAAA="
+     }
+    }
+   },
+   {
+    "id": "CnrF6ZRTckHtTMRD4mLxKKSrkJAZJzRigk9iqGeD3hES",
+    "block_hash": "ESF6BC6h9QDD5iKcE5deyt2TSbTytevj4e5AX9VTW8DQ",
+    "outcome": {
+     "executor_id": "b7adbc79858ed19dcc101002b64ac555c51da392d1a58486aa87f915820e82f6",
+     "logs": [],
+     "receipt_ids": [],
+     "status": {
+      "SuccessValue": ""
+     }
+    }
+   },
+   {
+    "id": "ET93C1Y2ZMxcgmHHRYDK79bymLS3AybonCz8sX8xXy14",
+    "block_hash": "ESF6BC6h9QDD5iKcE5deyt2TSbTytevj4e5AX9VTW8DQ",
+    "outcome": {
+     "executor_id": "v2.nightshade-probe.testnet",
+     "logs": [
+      "EVENT_JSON:{\"standard\":\"nightshade_bridge\",\"version\":\"1.0.0\",\"event\":\"attestation_rejected\",\"data\":{\"account\":\"b7adbc79858ed19dcc101002b64ac555c51da392d1a58486aa87f915820e82f6\",\"reason\":\"the quote does not bind the submitting key\"}}"
+     ],
+     "receipt_ids": [
+      "BrCBntQbH4QxDztktz3wyy3TfwKkbUWHkwzne4FT3QgP"
+     ],
+     "status": {
+      "SuccessValue": "ZmFsc2U="
+     }
+    }
+   },
+   {
+    "id": "BrCBntQbH4QxDztktz3wyy3TfwKkbUWHkwzne4FT3QgP",
+    "block_hash": "Xz7uSFdqi3Vu4hj5UmefQnbYoT2ifsBiuYrGptWAyH7",
+    "outcome": {
+     "executor_id": "b7adbc79858ed19dcc101002b64ac555c51da392d1a58486aa87f915820e82f6",
+     "logs": [],
+     "receipt_ids": [],
+     "status": {
+      "SuccessValue": ""
+     }
+    }
+   },
+   {
+    "id": "9xyAZKnzJxM7kz5iuQkVhF7G6U2SVke2Spy7knVP36Ld",
+    "block_hash": "C3kxpgWLjayXVxZUXRiVMqpr27d9df691BXnaYEFxkBn",
+    "outcome": {
+     "executor_id": "b7adbc79858ed19dcc101002b64ac555c51da392d1a58486aa87f915820e82f6",
+     "logs": [],
+     "receipt_ids": [],
+     "status": {
+      "SuccessValue": ""
+     }
+    }
+   }
+  ]
+ }
+}

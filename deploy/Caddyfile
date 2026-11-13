@@ -1,0 +1,8 @@
+{$DEMO_DOMAIN} {
+	encode gzip
+	reverse_proxy web:8787
+	# What a visitor reads while the page restarts.
+	handle_errors 502 503 504 {
+		respond "LIGHTSOUT is restarting. Try again in a minute." 503
+	}
+}

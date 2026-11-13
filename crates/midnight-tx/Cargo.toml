@@ -1,0 +1,20 @@
+[package]
+name = "midnight-tx"
+description = "Reads the burn log of the Midnight bridge from a serialized ledger-9 transaction"
+version = "0.1.0"
+edition = "2024"
+license = "Apache-2.0"
+repository = "https://github.com/ODATANO/LIGHTSOUT"
+
+[dependencies]
+
+# The ledger crates are the reference the parser is compared against; they never reach NEAR.
+[dev-dependencies]
+midnight-ledger-v9 = { version = "1.0.0", default-features = false }
+midnight-onchain-runtime = "4.0.0"
+midnight-serialize = "1.2.0"
+midnight-storage = "2.0.4"
+midnight-base-crypto = "1.1.0"
+midnight-transient-crypto = "3.0.0"
+sha2 = "0.10"
+hex = "0.4"

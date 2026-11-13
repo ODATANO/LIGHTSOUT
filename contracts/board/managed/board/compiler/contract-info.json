@@ -1,0 +1,1133 @@
+{
+  "compiler-version": "0.36.0",
+  "compiler-commit": "b5d9e4dfc532fe47011c4f6296e254f4853eb469",
+  "language-version": "0.28.0",
+  "runtime-version": "0.21.0",
+  "circuits": [
+    {
+      "name": "forget_marks",
+      "pure": false,
+      "proof": true,
+      "arguments": [
+        {
+          "name": "epoch",
+          "type": {
+            "type-name": "Uint",
+            "maxval": 4294967295
+          }
+        }
+      ],
+      "result-type": {
+        "type-name": "Tuple",
+        "types": [
+        ]
+      }
+    },
+    {
+      "name": "seal_begin",
+      "pure": false,
+      "proof": true,
+      "arguments": [
+        {
+          "name": "id",
+          "type": {
+            "type-name": "Bytes",
+            "length": 32
+          }
+        },
+        {
+          "name": "key_hash",
+          "type": {
+            "type-name": "Bytes",
+            "length": 32
+          }
+        },
+        {
+          "name": "content_hash",
+          "type": {
+            "type-name": "Bytes",
+            "length": 32
+          }
+        },
+        {
+          "name": "length",
+          "type": {
+            "type-name": "Uint",
+            "maxval": 4294967295
+          }
+        },
+        {
+          "name": "payout",
+          "type": {
+            "type-name": "Bytes",
+            "length": 32
+          }
+        },
+        {
+          "name": "epoch",
+          "type": {
+            "type-name": "Uint",
+            "maxval": 4294967295
+          }
+        }
+      ],
+      "result-type": {
+        "type-name": "Tuple",
+        "types": [
+        ]
+      }
+    },
+    {
+      "name": "seal_block",
+      "pure": false,
+      "proof": true,
+      "arguments": [
+        {
+          "name": "id",
+          "type": {
+            "type-name": "Bytes",
+            "length": 32
+          }
+        }
+      ],
+      "result-type": {
+        "type-name": "Tuple",
+        "types": [
+        ]
+      }
+    },
+    {
+      "name": "seal_finish",
+      "pure": false,
+      "proof": true,
+      "arguments": [
+        {
+          "name": "id",
+          "type": {
+            "type-name": "Bytes",
+            "length": 32
+          }
+        }
+      ],
+      "result-type": {
+        "type-name": "Tuple",
+        "types": [
+        ]
+      }
+    },
+    {
+      "name": "forget_drop",
+      "pure": false,
+      "proof": true,
+      "arguments": [
+        {
+          "name": "id",
+          "type": {
+            "type-name": "Bytes",
+            "length": 32
+          }
+        }
+      ],
+      "result-type": {
+        "type-name": "Tuple",
+        "types": [
+        ]
+      }
+    },
+    {
+      "name": "bountyId",
+      "pure": true,
+      "proof": false,
+      "arguments": [
+        {
+          "name": "terms",
+          "type": {
+            "type-name": "Struct",
+            "name": "Bounty",
+            "elements": [
+              {
+                "name": "request_hash",
+                "type": {
+                  "type-name": "Bytes",
+                  "length": 32
+                }
+              },
+              {
+                "name": "model",
+                "type": {
+                  "type-name": "Bytes",
+                  "length": 48
+                }
+              },
+              {
+                "name": "model_length",
+                "type": {
+                  "type-name": "Uint",
+                  "maxval": 255
+                }
+              },
+              {
+                "name": "keys",
+                "type": {
+                  "type-name": "Vector",
+                  "length": 4,
+                  "type": {
+                    "type-name": "Bytes",
+                    "length": 32
+                  }
+                }
+              },
+              {
+                "name": "buyer",
+                "type": {
+                  "type-name": "JubjubPoint"
+                }
+              },
+              {
+                "name": "refund_to",
+                "type": {
+                  "type-name": "Bytes",
+                  "length": 32
+                }
+              },
+              {
+                "name": "deadline",
+                "type": {
+                  "type-name": "Uint",
+                  "maxval": 18446744073709551615
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "reward",
+          "type": {
+            "type-name": "Uint",
+            "maxval": 340282366920938463463374607431768211455
+          }
+        }
+      ],
+      "result-type": {
+        "type-name": "Bytes",
+        "length": 32
+      }
+    },
+    {
+      "name": "post_bounty",
+      "pure": false,
+      "proof": true,
+      "arguments": [
+        {
+          "name": "request_hash",
+          "type": {
+            "type-name": "Bytes",
+            "length": 32
+          }
+        },
+        {
+          "name": "model",
+          "type": {
+            "type-name": "Bytes",
+            "length": 48
+          }
+        },
+        {
+          "name": "model_length",
+          "type": {
+            "type-name": "Uint",
+            "maxval": 255
+          }
+        },
+        {
+          "name": "keys",
+          "type": {
+            "type-name": "Vector",
+            "length": 4,
+            "type": {
+              "type-name": "Bytes",
+              "length": 32
+            }
+          }
+        },
+        {
+          "name": "text",
+          "type": {
+            "type-name": "Bytes",
+            "length": 512
+          }
+        },
+        {
+          "name": "text_length",
+          "type": {
+            "type-name": "Uint",
+            "maxval": 65535
+          }
+        },
+        {
+          "name": "coin",
+          "type": {
+            "type-name": "Struct",
+            "name": "ShieldedCoinInfo",
+            "elements": [
+              {
+                "name": "nonce",
+                "type": {
+                  "type-name": "Bytes",
+                  "length": 32
+                }
+              },
+              {
+                "name": "color",
+                "type": {
+                  "type-name": "Bytes",
+                  "length": 32
+                }
+              },
+              {
+                "name": "value",
+                "type": {
+                  "type-name": "Uint",
+                  "maxval": 340282366920938463463374607431768211455
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "buyer",
+          "type": {
+            "type-name": "JubjubPoint"
+          }
+        },
+        {
+          "name": "refund_to",
+          "type": {
+            "type-name": "Bytes",
+            "length": 32
+          }
+        },
+        {
+          "name": "deadline",
+          "type": {
+            "type-name": "Uint",
+            "maxval": 18446744073709551615
+          }
+        },
+        {
+          "name": "epoch",
+          "type": {
+            "type-name": "Uint",
+            "maxval": 4294967295
+          }
+        }
+      ],
+      "result-type": {
+        "type-name": "Tuple",
+        "types": [
+        ]
+      }
+    },
+    {
+      "name": "answer_16",
+      "pure": false,
+      "proof": true,
+      "arguments": [
+        {
+          "name": "bounty",
+          "type": {
+            "type-name": "Bytes",
+            "length": 32
+          }
+        },
+        {
+          "name": "drop",
+          "type": {
+            "type-name": "Bytes",
+            "length": 32
+          }
+        },
+        {
+          "name": "signature",
+          "type": {
+            "type-name": "Struct",
+            "name": "Ed25519Signature",
+            "elements": [
+              {
+                "name": "r",
+                "type": {
+                  "type-name": "Curve25519Point"
+                }
+              },
+              {
+                "name": "s",
+                "type": {
+                  "type-name": "Curve25519Scalar"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "point",
+          "type": {
+            "type-name": "Curve25519Point"
+          }
+        }
+      ],
+      "result-type": {
+        "type-name": "Tuple",
+        "types": [
+        ]
+      }
+    },
+    {
+      "name": "answer_24",
+      "pure": false,
+      "proof": true,
+      "arguments": [
+        {
+          "name": "bounty",
+          "type": {
+            "type-name": "Bytes",
+            "length": 32
+          }
+        },
+        {
+          "name": "drop",
+          "type": {
+            "type-name": "Bytes",
+            "length": 32
+          }
+        },
+        {
+          "name": "signature",
+          "type": {
+            "type-name": "Struct",
+            "name": "Ed25519Signature",
+            "elements": [
+              {
+                "name": "r",
+                "type": {
+                  "type-name": "Curve25519Point"
+                }
+              },
+              {
+                "name": "s",
+                "type": {
+                  "type-name": "Curve25519Scalar"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "point",
+          "type": {
+            "type-name": "Curve25519Point"
+          }
+        }
+      ],
+      "result-type": {
+        "type-name": "Tuple",
+        "types": [
+        ]
+      }
+    },
+    {
+      "name": "answer_36",
+      "pure": false,
+      "proof": true,
+      "arguments": [
+        {
+          "name": "bounty",
+          "type": {
+            "type-name": "Bytes",
+            "length": 32
+          }
+        },
+        {
+          "name": "drop",
+          "type": {
+            "type-name": "Bytes",
+            "length": 32
+          }
+        },
+        {
+          "name": "signature",
+          "type": {
+            "type-name": "Struct",
+            "name": "Ed25519Signature",
+            "elements": [
+              {
+                "name": "r",
+                "type": {
+                  "type-name": "Curve25519Point"
+                }
+              },
+              {
+                "name": "s",
+                "type": {
+                  "type-name": "Curve25519Scalar"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "point",
+          "type": {
+            "type-name": "Curve25519Point"
+          }
+        }
+      ],
+      "result-type": {
+        "type-name": "Tuple",
+        "types": [
+        ]
+      }
+    },
+    {
+      "name": "refund_bounty",
+      "pure": false,
+      "proof": true,
+      "arguments": [
+        {
+          "name": "bounty",
+          "type": {
+            "type-name": "Bytes",
+            "length": 32
+          }
+        }
+      ],
+      "result-type": {
+        "type-name": "Tuple",
+        "types": [
+        ]
+      }
+    },
+    {
+      "name": "forget_bounty",
+      "pure": false,
+      "proof": true,
+      "arguments": [
+        {
+          "name": "bounty",
+          "type": {
+            "type-name": "Bytes",
+            "length": 32
+          }
+        }
+      ],
+      "result-type": {
+        "type-name": "Tuple",
+        "types": [
+        ]
+      }
+    }
+  ],
+  "witnesses": [
+    {
+      "name": "bitsOf",
+      "arguments": [
+        {
+          "name": "x",
+          "type": {
+            "type-name": "Field"
+          }
+        }
+      ],
+      "result type": {
+        "type-name": "Vector",
+        "length": 35,
+        "type": {
+          "type-name": "Boolean"
+        }
+      }
+    },
+    {
+      "name": "memberSecret",
+      "arguments": [
+      ],
+      "result type": {
+        "type-name": "Bytes",
+        "length": 32
+      }
+    },
+    {
+      "name": "memberPath",
+      "arguments": [
+        {
+          "name": "leaf",
+          "type": {
+            "type-name": "Bytes",
+            "length": 32
+          }
+        }
+      ],
+      "result type": {
+        "type-name": "Struct",
+        "name": "MerkleTreePath",
+        "elements": [
+          {
+            "name": "leaf",
+            "type": {
+              "type-name": "Bytes",
+              "length": 32
+            }
+          },
+          {
+            "name": "path",
+            "type": {
+              "type-name": "Vector",
+              "length": 16,
+              "type": {
+                "type-name": "Struct",
+                "name": "MerkleTreePathEntry",
+                "elements": [
+                  {
+                    "name": "sibling",
+                    "type": {
+                      "type-name": "Struct",
+                      "name": "MerkleTreeDigest",
+                      "elements": [
+                        {
+                          "name": "field",
+                          "type": {
+                            "type-name": "Field"
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "name": "goes_left",
+                    "type": {
+                      "type-name": "Boolean"
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "memberSlot",
+      "arguments": [
+      ],
+      "result type": {
+        "type-name": "Uint",
+        "maxval": 255
+      }
+    },
+    {
+      "name": "contentKey",
+      "arguments": [
+      ],
+      "result type": {
+        "type-name": "Field"
+      }
+    },
+    {
+      "name": "contentBlock",
+      "arguments": [
+      ],
+      "result type": {
+        "type-name": "Bytes",
+        "length": 64
+      }
+    },
+    {
+      "name": "sealState",
+      "arguments": [
+      ],
+      "result type": {
+        "type-name": "Vector",
+        "length": 8,
+        "type": {
+          "type-name": "Uint",
+          "maxval": 4294967295
+        }
+      }
+    },
+    {
+      "name": "sealBlind",
+      "arguments": [
+      ],
+      "result type": {
+        "type-name": "Field"
+      }
+    },
+    {
+      "name": "sealNextBlind",
+      "arguments": [
+      ],
+      "result type": {
+        "type-name": "Field"
+      }
+    },
+    {
+      "name": "handoverNonce",
+      "arguments": [
+      ],
+      "result type": {
+        "type-name": "JubjubScalar"
+      }
+    },
+    {
+      "name": "coinSecretKey",
+      "arguments": [
+      ],
+      "result type": {
+        "type-name": "Bytes",
+        "length": 32
+      }
+    },
+    {
+      "name": "bitsOfByte",
+      "arguments": [
+        {
+          "name": "x",
+          "type": {
+            "type-name": "Uint",
+            "maxval": 255
+          }
+        }
+      ],
+      "result type": {
+        "type-name": "Vector",
+        "length": 8,
+        "type": {
+          "type-name": "Boolean"
+        }
+      }
+    },
+    {
+      "name": "lowBit",
+      "arguments": [
+        {
+          "name": "x",
+          "type": {
+            "type-name": "Uint",
+            "maxval": 255
+          }
+        }
+      ],
+      "result type": {
+        "type-name": "Tuple",
+        "types": [
+          {
+            "type-name": "Boolean"
+          },
+          {
+            "type-name": "Uint",
+            "maxval": 127
+          }
+        ]
+      }
+    }
+  ],
+  "contracts": [
+    {
+      "name": "Bridge",
+      "circuits": [
+        {
+          "name": "known_root",
+          "argument-types": [
+            {
+              "type-name": "Struct",
+              "name": "MerkleTreeDigest",
+              "elements": [
+                {
+                  "name": "field",
+                  "type": {
+                    "type-name": "Field"
+                  }
+                }
+              ]
+            }
+          ],
+          "result-type": {
+            "type-name": "Tuple",
+            "types": [
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "ledger": [
+    {
+      "name": "bridge",
+      "index": 0,
+      "exported": true,
+      "storage": "Cell",
+      "type": {
+        "type-name": "Contract",
+        "name": "Bridge",
+        "circuits": [
+          {
+            "name": "known_root",
+            "argument-types": [
+              {
+                "type-name": "Struct",
+                "name": "MerkleTreeDigest",
+                "elements": [
+                  {
+                    "name": "field",
+                    "type": {
+                      "type-name": "Field"
+                    }
+                  }
+                ]
+              }
+            ],
+            "result-type": {
+              "type-name": "Tuple",
+              "types": [
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "token",
+      "index": 1,
+      "exported": true,
+      "storage": "Cell",
+      "type": {
+        "type-name": "Bytes",
+        "length": 32
+      }
+    },
+    {
+      "name": "drops",
+      "index": 2,
+      "exported": true,
+      "storage": "Map",
+      "key": {
+        "type-name": "Bytes",
+        "length": 32
+      },
+      "value": {
+        "type-name": "Struct",
+        "name": "Drop",
+        "elements": [
+          {
+            "name": "key_hash",
+            "type": {
+              "type-name": "Bytes",
+              "length": 32
+            }
+          },
+          {
+            "name": "content_hash",
+            "type": {
+              "type-name": "Bytes",
+              "length": 32
+            }
+          },
+          {
+            "name": "length",
+            "type": {
+              "type-name": "Uint",
+              "maxval": 4294967295
+            }
+          },
+          {
+            "name": "payout",
+            "type": {
+              "type-name": "Bytes",
+              "length": 32
+            }
+          },
+          {
+            "name": "day",
+            "type": {
+              "type-name": "Uint",
+              "maxval": 4294967295
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "seals",
+      "index": 3,
+      "exported": true,
+      "storage": "Map",
+      "key": {
+        "type-name": "Bytes",
+        "length": 32
+      },
+      "value": {
+        "type-name": "Struct",
+        "name": "Seal",
+        "elements": [
+          {
+            "name": "remaining",
+            "type": {
+              "type-name": "Uint",
+              "maxval": 4294967295
+            }
+          },
+          {
+            "name": "ended",
+            "type": {
+              "type-name": "Boolean"
+            }
+          },
+          {
+            "name": "blocks",
+            "type": {
+              "type-name": "Uint",
+              "maxval": 4294967295
+            }
+          },
+          {
+            "name": "chain",
+            "type": {
+              "type-name": "Field"
+            }
+          },
+          {
+            "name": "done",
+            "type": {
+              "type-name": "Boolean"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "cipher",
+      "index": 4,
+      "exported": true,
+      "storage": "Map",
+      "key": {
+        "type-name": "Bytes",
+        "length": 32
+      },
+      "value": {
+        "type-name": "Map",
+        "key": {
+          "type-name": "Uint",
+          "maxval": 4294967295
+        },
+        "value": {
+          "type-name": "Vector",
+          "length": 3,
+          "type": {
+            "type-name": "Field"
+          }
+        }
+      }
+    },
+    {
+      "name": "marks",
+      "index": 5,
+      "exported": true,
+      "storage": "Map",
+      "key": {
+        "type-name": "Uint",
+        "maxval": 4294967295
+      },
+      "value": {
+        "type-name": "Set",
+        "type": {
+          "type-name": "Bytes",
+          "length": 32
+        }
+      }
+    },
+    {
+      "name": "bounties",
+      "index": 6,
+      "exported": true,
+      "storage": "Map",
+      "key": {
+        "type-name": "Bytes",
+        "length": 32
+      },
+      "value": {
+        "type-name": "Struct",
+        "name": "Bounty",
+        "elements": [
+          {
+            "name": "request_hash",
+            "type": {
+              "type-name": "Bytes",
+              "length": 32
+            }
+          },
+          {
+            "name": "model",
+            "type": {
+              "type-name": "Bytes",
+              "length": 48
+            }
+          },
+          {
+            "name": "model_length",
+            "type": {
+              "type-name": "Uint",
+              "maxval": 255
+            }
+          },
+          {
+            "name": "keys",
+            "type": {
+              "type-name": "Vector",
+              "length": 4,
+              "type": {
+                "type-name": "Bytes",
+                "length": 32
+              }
+            }
+          },
+          {
+            "name": "buyer",
+            "type": {
+              "type-name": "JubjubPoint"
+            }
+          },
+          {
+            "name": "refund_to",
+            "type": {
+              "type-name": "Bytes",
+              "length": 32
+            }
+          },
+          {
+            "name": "deadline",
+            "type": {
+              "type-name": "Uint",
+              "maxval": 18446744073709551615
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "requests",
+      "index": 7,
+      "exported": true,
+      "storage": "Map",
+      "key": {
+        "type-name": "Bytes",
+        "length": 32
+      },
+      "value": {
+        "type-name": "Struct",
+        "name": "Request",
+        "elements": [
+          {
+            "name": "text",
+            "type": {
+              "type-name": "Bytes",
+              "length": 512
+            }
+          },
+          {
+            "name": "length",
+            "type": {
+              "type-name": "Uint",
+              "maxval": 65535
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "rewards",
+      "index": 8,
+      "exported": true,
+      "storage": "Map",
+      "key": {
+        "type-name": "Bytes",
+        "length": 32
+      },
+      "value": {
+        "type-name": "Struct",
+        "name": "QualifiedShieldedCoinInfo",
+        "elements": [
+          {
+            "name": "nonce",
+            "type": {
+              "type-name": "Bytes",
+              "length": 32
+            }
+          },
+          {
+            "name": "color",
+            "type": {
+              "type-name": "Bytes",
+              "length": 32
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "type-name": "Uint",
+              "maxval": 340282366920938463463374607431768211455
+            }
+          },
+          {
+            "name": "mt_index",
+            "type": {
+              "type-name": "Uint",
+              "maxval": 18446744073709551615
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "answers",
+      "index": 9,
+      "exported": true,
+      "storage": "Map",
+      "key": {
+        "type-name": "Bytes",
+        "length": 32
+      },
+      "value": {
+        "type-name": "Struct",
+        "name": "Answer",
+        "elements": [
+          {
+            "name": "drop",
+            "type": {
+              "type-name": "Bytes",
+              "length": 32
+            }
+          },
+          {
+            "name": "handover",
+            "type": {
+              "type-name": "Struct",
+              "name": "Handover",
+              "elements": [
+                {
+                  "name": "point",
+                  "type": {
+                    "type-name": "JubjubPoint"
+                  }
+                },
+                {
+                  "name": "masked",
+                  "type": {
+                    "type-name": "Field"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

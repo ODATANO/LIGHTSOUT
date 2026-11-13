@@ -1,0 +1,28 @@
+{
+  "name": "lightsout-mcp",
+  "version": "0.1.0",
+  "private": true,
+  "description": "MCP server for one LIGHTSOUT agent: deposit NEAR, send wNEAR, withdraw to NEAR, ask a model for a reward, answer bounties. And a crowd of agents that Claude steers through it",
+  "license": "Apache-2.0",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "tsx --env-file=../.env src/server.ts",
+    "crowd": "tsx --env-file=../.env src/crowd.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test src/crowd/*.test.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "1.8.0",
+    "@modelcontextprotocol/sdk": "1.32.2",
+    "lightsout-kit": "0.1.0",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.5",
+    "tsx": "4.23.15",
+    "typescript": "7.0.2"
+  }
+}

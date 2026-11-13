@@ -1,0 +1,570 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LIGHTSOUT</title>
+<meta name="description" content="LIGHTSOUT is a bridge between NEAR and Midnight that nobody has to trust: each chain runs a light client of the other. On top of it an agent asks an AI model without an account, and nobody sees who asked. Start an agent and try it live.">
+<meta name="theme-color" content="#0c0f1a">
+<meta property="og:type" content="website">
+<meta property="og:title" content="LIGHTSOUT: a bridge nobody has to trust, an AI nobody sees you ask">
+<meta property="og:description" content="NEAR and Midnight each run a light client of the other, with no operator in between. On top of it an agent asks an AI model without an account, and nobody sees who asked.">
+<meta name="twitter:card" content="summary">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='0'%3E%3Cstop stop-color='%2300ec97'/%3E%3Cstop offset='.5' stop-color='%235ad1ff'/%3E%3Cstop offset='1' stop-color='%236480ff'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='8' fill='%2307080c'/%3E%3Cg transform='translate(4 4)'%3E%3Ccircle cx='13.200' cy='10.800' r='7' fill='%23060917' stroke='%234a5fd6' stroke-width='1.100'/%3E%3Cpath d='M8.890 5.280A8 8 0 1 0 18.720 15.110 7 7 0 1 1 8.890 5.280z' fill='url(%23g)'/%3E%3C/g%3E%3C/svg%3E">
+<link rel="preload" href="/fonts/inter.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/space-grotesk.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="backdrop" aria-hidden="true"></div>
+
+<svg class="sprite" aria-hidden="true">
+  <defs>
+    <linearGradient id="brand" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#00ec97"/><stop offset="0.5" stop-color="#5ad1ff"/><stop offset="1" stop-color="#6480ff"/>
+    </linearGradient>
+  </defs>
+  <symbol id="i-logo" viewBox="0 0 24 24"><circle cx="13.200" cy="10.800" r="7" fill="#060917" stroke="#4a5fd6" stroke-width="1.100"/><path d="M8.890 5.280A8 8 0 1 0 18.720 15.110 7 7 0 1 1 8.890 5.280z" fill="url(#brand)" stroke="none"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.600-6.500 10-6.500S22 12 22 12s-3.600 6.500-10 6.500S2 12 2 12z" fill="none" stroke="currentColor" stroke-width="1.700"/><circle cx="12" cy="12" r="2.800" fill="none" stroke="currentColor" stroke-width="1.700"/></symbol>
+  <symbol id="i-eye-off" viewBox="0 0 24 24"><path d="M4 4l16 16M9.500 5.900A10.600 10.600 0 0 1 12 5.500C18.400 5.500 22 12 22 12a17 17 0 0 1-3.200 3.900M6.300 7.400A16.600 16.600 0 0 0 2 12s3.600 6.500 10 6.500c1.500 0 2.800-.300 4-.800" fill="none" stroke="currentColor" stroke-width="1.700" stroke-linecap="round"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8.500" y="8.500" width="11" height="11" rx="2.200" fill="none" stroke="currentColor" stroke-width="1.700"/><path d="M15.500 5.500v-1a2 2 0 0 0-2-2h-8a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h1" fill="none" stroke="currentColor" stroke-width="1.700"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.500l4.500 4.500L19 7.500" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16" fill="none" stroke="currentColor" stroke-width="1.900" stroke-linecap="round"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.900" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3l7.500 3v5.500c0 4.600-3.100 8-7.500 9.500-4.400-1.500-7.500-4.900-7.500-9.500V6L12 3z" fill="none" stroke="currentColor" stroke-width="1.700" stroke-linejoin="round"/></symbol>
+  <symbol id="i-agent" viewBox="0 0 24 24"><path d="M12 3.200v3.300M2.600 11.500v3M21.400 11.500v3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="2.800" r="1.600" fill="currentColor"/><rect x="5" y="6.500" width="14" height="12.500" rx="3.600" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="9.300" cy="12.300" r="1.700" fill="currentColor"/><circle cx="14.700" cy="12.300" r="1.700" fill="currentColor"/></symbol>
+  <symbol id="i-near" viewBox="0 0 90.1 90"><path d="M72.2,4.6L53.4,32.5c-1.3,1.9,1.2,4.2,3,2.6L74.9,19c0.5-0.4,1.2-0.1,1.2,0.6v50.3c0,0.7-0.9,1-1.3,0.5l-56-67C17,1.2,14.4,0,11.5,0h-2C4.3,0,0,4.3,0,9.6v70.8C0,85.7,4.3,90,9.6,90c3.3,0,6.4-1.7,8.2-4.6l18.8-27.9c1.3-1.9-1.2-4.2-3-2.6l-18.5,16c-0.5,0.4-1.2,0.1-1.2-0.6V20.1c0-0.7,0.9-1,1.3-0.5l56,67c1.8,2.2,4.5,3.4,7.3,3.4h2c5.3,0,9.6-4.3,9.6-9.6V9.6c0-5.3-4.3-9.6-9.6-9.6C77.1,0,74,1.7,72.2,4.6z" fill="currentColor"/></symbol>
+  <symbol id="i-midnight" viewBox="0 0 789.37 789.37"><path d="m394.69,0C176.71,0,0,176.71,0,394.69s176.71,394.69,394.69,394.69,394.69-176.71,394.69-394.69S612.67,0,394.69,0Zm0,716.6c-177.5,0-321.91-144.41-321.91-321.91S217.18,72.78,394.69,72.78s321.91,144.41,321.91,321.91-144.41,321.91-321.91,321.91Z" fill="currentColor"/><rect x="357.64" y="357.64" width="74.09" height="74.09" fill="currentColor"/><rect x="357.64" y="240.66" width="74.09" height="74.09" fill="currentColor"/><rect x="357.64" y="123.69" width="74.09" height="74.09" fill="currentColor"/></symbol>
+</svg>
+
+<noscript><p class="alert noscript">This page reads both chains and runs the sandbox with JavaScript. Without it you see the text, and no live numbers.</p></noscript>
+<nav class="top">
+  <a class="logo" href="#top"><svg width="42" height="42"><use href="#i-logo"/></svg><span>LIGHTS<i>OUT</i></span></a>
+  <div class="top-links">
+    <a href="#how">The bridge</a>
+    <a href="#sandbox">Sandbox</a>
+    <a href="#answers">Private answers</a>
+    <a href="#run">Run it yourself</a>
+  </div>
+  <div class="nets" id="nets" title="Read from both chains">
+    <span class="net near" role="img" aria-label="NEAR testnet" title="NEAR testnet"><svg width="19" height="19"><use href="#i-near"/></svg></span>
+    <span class="net midnight" role="img" aria-label="Midnight preview" title="Midnight preview"><svg width="20" height="20"><use href="#i-midnight"/></svg></span>
+  </div>
+  <details class="menu" id="menu">
+    <summary aria-label="Sections of this page"><svg width="18" height="18"><use href="#i-menu"/></svg></summary>
+    <div class="menu-links">
+      <a href="#how">The bridge</a>
+      <a href="#sandbox">Sandbox</a>
+      <a href="#answers">Private answers</a>
+      <a href="#run">Run it yourself</a>
+    </div>
+  </details>
+</nav>
+
+<header class="hero" id="top">
+  <div class="hero-text">
+    <p class="eyebrow" id="live"><span class="pulse"></span>Live on NEAR testnet and Midnight preview</p>
+    <h1>A bridge nobody has to trust.<br><span class="grad">An AI nobody sees you ask.</span></h1>
+    <p class="sub">LIGHTSOUT runs with nobody in charge. It brings NEAR to Midnight as a shielded token and back with no operator, no committee and no enclave: each chain runs a light client of the other. On top of it your agent asks an AI model on NEAR AI without an account and pays privately, as <em>a member</em>. A contract checks that the answer came out of the model's TEE.</p>
+    <div class="cta">
+      <button class="btn primary" id="hero-start"><span>Start an agent</span><svg width="18" height="18"><use href="#i-arrow"/></svg></button>
+      <a class="btn ghost" href="#how">How the bridge works</a>
+      <a class="btn ghost" href="#answers">Who learns what</a>
+    </div>
+  </div>
+
+  <figure class="flow visual">
+    <svg class="flow-wide" viewBox="0 0 1160 414" role="img" aria-label="The flow across three zones. Public, on NEAR, where everyone sees who pays what: accounts with their names register and pay NEAR in at the bridge contract, which locks it and pays it out again. Shielded, on Midnight, where nobody sees which member acts: the bridge contract mints wNEAR and burns it, the members are the same agents without names, one of them asks at the board contract, another one asks the model and brings the signed answer, and the board checks it, then pays. In the enclave on NEAR AI the model signs the answer and never sees the asker.">
+      <defs>
+        <radialGradient id="w-glow-public"><stop offset="0" stop-color="#00ec97" stop-opacity="0.220"/><stop offset="1" stop-color="#00ec97" stop-opacity="0"/></radialGradient>
+        <radialGradient id="w-glow-shielded"><stop offset="0" stop-color="#2b3fb5" stop-opacity="0.500"/><stop offset="1" stop-color="#2b3fb5" stop-opacity="0"/></radialGradient>
+        <radialGradient id="w-glow-enclave"><stop offset="0" stop-color="#5ad1ff" stop-opacity="0.200"/><stop offset="1" stop-color="#5ad1ff" stop-opacity="0"/></radialGradient>
+        <clipPath id="w-clip-public"><rect x="1" y="1" width="370" height="412" rx="16"/></clipPath>
+        <clipPath id="w-clip-shielded"><rect x="385" y="1" width="535" height="412" rx="16"/></clipPath>
+        <clipPath id="w-clip-enclave"><rect x="934" y="1" width="225" height="412" rx="16"/></clipPath>
+        <linearGradient id="w-chain" gradientUnits="userSpaceOnUse" x1="105" y1="0" x2="1046.5" y2="0"><stop offset="0.000" stop-color="#00ec97"/><stop offset="0.283" stop-color="#00ec97"/><stop offset="0.297" stop-color="#6480ff"/><stop offset="0.866" stop-color="#6480ff"/><stop offset="0.881" stop-color="#5ad1ff"/><stop offset="1.000" stop-color="#5ad1ff"/></linearGradient>
+        <path id="w-route" d="M200 257 L214 257 M356 257 L400 257 M542 257 L558 257 M685 170 L685 150 M685 150 L685 170 M812 257 L965.5 257 M965.5 257 L812 257 M558 257 L542 257 M400 257 L356 257 M214 257 L200 257"/>
+      </defs>
+      <rect class="zone public" x="1" y="1" width="370" height="412" rx="16"/>
+      <rect class="zone shielded" x="385" y="1" width="535" height="412" rx="16"/>
+      <rect class="zone enclave" x="934" y="1" width="225" height="412" rx="16"/>
+      <ellipse cx="200" cy="257" rx="250" ry="180" fill="url(#w-glow-public)" clip-path="url(#w-clip-public)"/>
+      <ellipse cx="600" cy="190" rx="340" ry="240" fill="url(#w-glow-shielded)" clip-path="url(#w-clip-shielded)"/>
+      <ellipse cx="1046.5" cy="257" rx="150" ry="170" fill="url(#w-glow-enclave)" clip-path="url(#w-clip-enclave)"/>
+      <g class="zone-head public"><use href="#i-near" x="25" y="23" width="18" height="18"/><text x="51" y="37" class="zone-name">PUBLIC · NEAR</text><text x="25" y="60" class="zone-says">Everyone sees who pays what.</text></g>
+      <g class="zone-head shielded"><use href="#i-midnight" x="409" y="23" width="18" height="18"/><text x="435" y="37" class="zone-name">SHIELDED · MIDNIGHT</text><text x="409" y="60" class="zone-says">Nobody sees which</text><text x="409" y="78" class="zone-says">member acts.</text></g>
+      <g class="zone-head enclave"><use href="#i-shield" x="958" y="23" width="18" height="18"/><text x="984" y="37" class="zone-name">ENCLAVE · NEAR AI</text><text x="958" y="60" class="zone-says">Never sees the asker.</text></g>
+      <path class="arc" stroke="url(#w-chain)" d="M196 257 L218 257"/>
+      <path class="arc" stroke="url(#w-chain)" d="M352 257 L404 257"/>
+      <path class="arc" stroke="url(#w-chain)" d="M538 257 L562 257"/>
+      <path class="arc" stroke="url(#w-chain)" d="M685 146 L685 174"/>
+      <path class="arc" stroke="url(#w-chain)" d="M808 257 L969.5 257"/>
+      <path fill="url(#w-chain)" d="M223 257 L215.5 260.8 L215.5 253.2 Z"/>
+      <path fill="url(#w-chain)" d="M191 257 L198.5 253.2 L198.5 260.8 Z"/>
+      <path fill="url(#w-chain)" d="M409 257 L401.5 260.8 L401.5 253.2 Z"/>
+      <path fill="url(#w-chain)" d="M347 257 L354.5 253.2 L354.5 260.8 Z"/>
+      <path fill="url(#w-chain)" d="M567 257 L559.5 260.8 L559.5 253.2 Z"/>
+      <path fill="url(#w-chain)" d="M533 257 L540.5 253.2 L540.5 260.8 Z"/>
+      <path fill="url(#w-chain)" d="M685 179 L681.2 171.5 L688.8 171.5 Z"/>
+      <path fill="url(#w-chain)" d="M685 141 L688.8 148.5 L681.2 148.5 Z"/>
+      <path fill="url(#w-chain)" d="M974.5 257 L967 260.8 L967 253.2 Z"/>
+      <path fill="url(#w-chain)" d="M803 257 L810.5 253.2 L810.5 260.8 Z"/>
+      <g class="particles">
+        <circle r="4"><animateMotion dur="13s" begin="-0s" repeatCount="indefinite"><mpath href="#w-route"/></animateMotion></circle>
+      </g>
+      <g class="node near"><circle cx="285" cy="257" r="56"/><text x="285" y="255" class="node-name">BRIDGE</text><text x="285" y="274" class="node-net">contract</text></g>
+      <g class="node midnight"><circle cx="471" cy="257" r="56"/><text x="471" y="255" class="node-name">BRIDGE</text><text x="471" y="274" class="node-net">contract</text></g>
+      <g class="node midnight"><circle cx="685" cy="79" r="56"/><text x="685" y="77" class="node-name">BOARD</text><text x="685" y="96" class="node-net">contract</text></g>
+      <g class="node model"><circle cx="1046.5" cy="257" r="66"/><text x="1046.5" y="255" class="node-name">MODEL</text><text x="1046.5" y="274" class="node-net">in a TEE</text></g>
+      <g class="node named"><rect x="25" y="99" width="160" height="230.0" rx="18"/><text x="105" y="131" class="node-name">ACCOUNTS</text><circle class="agent seen" cx="53" cy="171" r="10"/><use class="bot seen" href="#i-agent" x="46.0" y="163.5" width="14" height="14"/><text class="acct" x="70" y="175.5">alice.near</text><circle class="agent seen" cx="53" cy="205" r="10"/><use class="bot seen" href="#i-agent" x="46.0" y="197.5" width="14" height="14"/><text class="acct" x="70" y="209.5">bob.near</text><circle class="agent seen" cx="53" cy="239" r="10"/><use class="bot seen" href="#i-agent" x="46.0" y="231.5" width="14" height="14"/><text class="acct" x="70" y="243.5">carol.near</text><circle class="agent seen" cx="53" cy="273" r="10"/><use class="bot seen" href="#i-agent" x="46.0" y="265.5" width="14" height="14"/><text class="acct" x="70" y="277.5">dave.near</text><circle class="agent seen" cx="53" cy="307" r="10"/><use class="bot seen" href="#i-agent" x="46.0" y="299.5" width="14" height="14"/><text class="acct" x="70" y="311.5">erin.near</text></g>
+      <g class="node open"><rect x="573" y="185" width="224" height="144" rx="18"/><text x="685" y="213" class="node-name">MEMBERS</text><circle class="agent" cx="605" cy="257" r="13"/><use class="bot" href="#i-agent" x="595.5" y="247.0" width="19" height="19"/><circle class="agent" cx="637" cy="257" r="13"/><use class="bot" href="#i-agent" x="627.5" y="247.0" width="19" height="19"/><circle class="agent" cx="669" cy="257" r="13"/><use class="bot" href="#i-agent" x="659.5" y="247.0" width="19" height="19"/><circle class="agent" cx="701" cy="257" r="13"/><use class="bot" href="#i-agent" x="691.5" y="247.0" width="19" height="19"/><circle class="agent" cx="733" cy="257" r="13"/><use class="bot" href="#i-agent" x="723.5" y="247.0" width="19" height="19"/><circle class="agent" cx="765" cy="257" r="13"/><use class="bot" href="#i-agent" x="755.5" y="247.0" width="19" height="19"/><circle class="agent" cx="605" cy="291" r="13"/><use class="bot" href="#i-agent" x="595.5" y="281.0" width="19" height="19"/><circle class="agent" cx="637" cy="291" r="13"/><use class="bot" href="#i-agent" x="627.5" y="281.0" width="19" height="19"/><circle class="agent" cx="669" cy="291" r="13"/><use class="bot" href="#i-agent" x="659.5" y="281.0" width="19" height="19"/><circle class="agent" cx="701" cy="291" r="13"/><use class="bot" href="#i-agent" x="691.5" y="281.0" width="19" height="19"/><circle class="agent" cx="733" cy="291" r="13"/><use class="bot" href="#i-agent" x="723.5" y="281.0" width="19" height="19"/><circle class="agent" cx="765" cy="291" r="13"/><use class="bot" href="#i-agent" x="755.5" y="281.0" width="19" height="19"/></g>
+      <g class="hop near" transform="translate(61.8 355)"><circle r="10.5"/><text class="step-n" y="4">1</text><text class="step-t" x="18" y="4.5">register</text></g>
+      <g class="hop near" transform="translate(61.8 379)"><circle r="10.5"/><text class="step-n" y="4">2</text><text class="step-t" x="18" y="4.5">pay NEAR in</text></g>
+      <text x="285" y="359.5" class="does">locks NEAR</text>
+      <text x="285" y="383.5" class="does">and pays it out</text>
+      <g class="hop mid" transform="translate(423.4 355)"><circle r="10.5"/><text class="step-n" y="4">3</text><text class="step-t" x="18" y="4.5">mints wNEAR</text></g>
+      <text x="441.4" y="383.5" class="does left">and burns it</text>
+      <g class="hop mid" transform="translate(604.6 355)"><circle r="10.5"/><text class="step-n" y="4">4</text><text class="step-t" x="18" y="4.5">one asks a question</text></g>
+      <g class="hop mid" transform="translate(604.6 379)"><circle r="10.5"/><text class="step-n" y="4">5</text><text class="step-t" x="18" y="4.5">another asks the model</text></g>
+      <text x="1046.5" y="359.5" class="does">signs the answer</text>
+      <g class="hop mid" transform="translate(765.5 79)"><circle r="10.5"/><text class="step-n" y="4">6</text><text class="step-t" x="18" y="4.5">checks, then pays</text></g>
+    </svg>
+    <svg class="flow-tall" viewBox="0 0 340 1120" role="img" aria-label="The flow across three zones. Public, on NEAR, where everyone sees who pays what: accounts with their names register and pay NEAR in at the bridge contract, which locks it and pays it out again. Shielded, on Midnight, where nobody sees which member acts: the bridge contract mints wNEAR and burns it, the members are the same agents without names, one of them asks at the board contract, another one asks the model and brings the signed answer, and the board checks it, then pays. In the enclave on NEAR AI the model signs the answer and never sees the asker.">
+      <defs>
+        <radialGradient id="t-glow-public"><stop offset="0" stop-color="#00ec97" stop-opacity="0.220"/><stop offset="1" stop-color="#00ec97" stop-opacity="0"/></radialGradient>
+        <radialGradient id="t-glow-shielded"><stop offset="0" stop-color="#2b3fb5" stop-opacity="0.500"/><stop offset="1" stop-color="#2b3fb5" stop-opacity="0"/></radialGradient>
+        <radialGradient id="t-glow-enclave"><stop offset="0" stop-color="#5ad1ff" stop-opacity="0.200"/><stop offset="1" stop-color="#5ad1ff" stop-opacity="0"/></radialGradient>
+        <clipPath id="t-clip-public"><rect x="1" y="1" width="338" height="436" rx="16"/></clipPath>
+        <clipPath id="t-clip-shielded"><rect x="1" y="449" width="338" height="457" rx="16"/></clipPath>
+        <clipPath id="t-clip-enclave"><rect x="1" y="918" width="338" height="200" rx="16"/></clipPath>
+        <linearGradient id="t-chain" gradientUnits="userSpaceOnUse" x1="0" y1="184" x2="0" y2="1038"><stop offset="0.000" stop-color="#00ec97"/><stop offset="0.296" stop-color="#00ec97"/><stop offset="0.310" stop-color="#6480ff"/><stop offset="0.845" stop-color="#6480ff"/><stop offset="0.859" stop-color="#5ad1ff"/><stop offset="1.000" stop-color="#5ad1ff"/></linearGradient>
+        <path id="t-route" d="M242 287 L242 301 M242 423 L242 512 M242 634 L242 648 M152 727 L133 727 M133 727 L152 727 M242 806 L242 969 M242 969 L242 806 M242 648 L242 634 M242 512 L242 423 M242 301 L242 287"/>
+      </defs>
+      <rect class="zone public" x="1" y="1" width="338" height="436" rx="16"/>
+      <rect class="zone shielded" x="1" y="449" width="338" height="457" rx="16"/>
+      <rect class="zone enclave" x="1" y="918" width="338" height="200" rx="16"/>
+      <ellipse cx="242" cy="260" rx="200" ry="220" fill="url(#t-glow-public)" clip-path="url(#t-clip-public)"/>
+      <ellipse cx="170" cy="690" rx="240" ry="280" fill="url(#t-glow-shielded)" clip-path="url(#t-clip-shielded)"/>
+      <ellipse cx="242" cy="1038" rx="150" ry="150" fill="url(#t-glow-enclave)" clip-path="url(#t-clip-enclave)"/>
+      <g class="zone-head public"><use href="#i-near" x="25" y="23" width="18" height="18"/><text x="51" y="37" class="zone-name">PUBLIC · NEAR</text><text x="25" y="60" class="zone-says">Everyone sees who pays what.</text></g>
+      <g class="zone-head shielded"><use href="#i-midnight" x="25" y="471" width="18" height="18"/><text x="51" y="485" class="zone-name">SHIELDED · MIDNIGHT</text><text x="25" y="508" class="zone-says">Nobody sees which</text><text x="25" y="526" class="zone-says">member acts.</text></g>
+      <g class="zone-head enclave"><use href="#i-shield" x="25" y="940" width="18" height="18"/><text x="51" y="954" class="zone-name">ENCLAVE · NEAR AI</text><text x="25" y="977" class="zone-says">Never sees the asker.</text></g>
+      <path class="arc" stroke="url(#t-chain)" d="M242 283 L242 305"/>
+      <path class="arc" stroke="url(#t-chain)" d="M242 419 L242 516"/>
+      <path class="arc" stroke="url(#t-chain)" d="M242 630 L242 652"/>
+      <path class="arc" stroke="url(#t-chain)" d="M129 727 L156 727"/>
+      <path class="arc" stroke="url(#t-chain)" d="M242 802 L242 973"/>
+      <path fill="url(#t-chain)" d="M242 310 L238.2 302.5 L245.8 302.5 Z"/>
+      <path fill="url(#t-chain)" d="M242 278 L245.8 285.5 L238.2 285.5 Z"/>
+      <path fill="url(#t-chain)" d="M242 521 L238.2 513.5 L245.8 513.5 Z"/>
+      <path fill="url(#t-chain)" d="M242 414 L245.8 421.5 L238.2 421.5 Z"/>
+      <path fill="url(#t-chain)" d="M242 657 L238.2 649.5 L245.8 649.5 Z"/>
+      <path fill="url(#t-chain)" d="M242 625 L245.8 632.5 L238.2 632.5 Z"/>
+      <path fill="url(#t-chain)" d="M161 727 L153.5 730.8 L153.5 723.2 Z"/>
+      <path fill="url(#t-chain)" d="M124 727 L131.5 723.2 L131.5 730.8 Z"/>
+      <path fill="url(#t-chain)" d="M242 978 L238.2 970.5 L245.8 970.5 Z"/>
+      <path fill="url(#t-chain)" d="M242 797 L245.8 804.5 L238.2 804.5 Z"/>
+      <g class="particles">
+        <circle r="4"><animateMotion dur="15.7s" begin="-0s" repeatCount="indefinite"><mpath href="#t-route"/></animateMotion></circle>
+      </g>
+      <g class="node near"><circle cx="242" cy="362" r="46"/><text x="242" y="360" class="node-name">BRIDGE</text><text x="242" y="379" class="node-net">contract</text></g>
+      <g class="node midnight"><circle cx="242" cy="573" r="46"/><text x="242" y="571" class="node-name">BRIDGE</text><text x="242" y="590" class="node-net">contract</text></g>
+      <g class="node midnight"><circle cx="72" cy="727" r="46"/><text x="72" y="725" class="node-name">BOARD</text><text x="72" y="744" class="node-net">contract</text></g>
+      <g class="node model"><circle cx="242" cy="1038" r="54"/><text x="242" y="1036" class="node-name">MODEL</text><text x="242" y="1055" class="node-net">in a TEE</text></g>
+      <g class="node named"><rect x="167" y="96" width="150" height="176" rx="18"/><text x="242" y="128" class="node-name">ACCOUNTS</text><circle class="agent seen" cx="195" cy="156" r="9"/><use class="bot seen" href="#i-agent" x="188.5" y="149.0" width="13" height="13"/><text class="acct" x="211" y="160.5">alice.near</text><circle class="agent seen" cx="195" cy="180" r="9"/><use class="bot seen" href="#i-agent" x="188.5" y="173.0" width="13" height="13"/><text class="acct" x="211" y="184.5">bob.near</text><circle class="agent seen" cx="195" cy="204" r="9"/><use class="bot seen" href="#i-agent" x="188.5" y="197.0" width="13" height="13"/><text class="acct" x="211" y="208.5">carol.near</text><circle class="agent seen" cx="195" cy="228" r="9"/><use class="bot seen" href="#i-agent" x="188.5" y="221.0" width="13" height="13"/><text class="acct" x="211" y="232.5">dave.near</text><circle class="agent seen" cx="195" cy="252" r="9"/><use class="bot seen" href="#i-agent" x="188.5" y="245.0" width="13" height="13"/><text class="acct" x="211" y="256.5">erin.near</text></g>
+      <g class="node open"><rect x="167" y="663" width="150" height="128" rx="18"/><text x="242" y="691" class="node-name">MEMBERS</text><circle class="agent" cx="200" cy="727" r="11"/><use class="bot" href="#i-agent" x="192.0" y="718.5" width="16" height="16"/><circle class="agent" cx="228" cy="727" r="11"/><use class="bot" href="#i-agent" x="220.0" y="718.5" width="16" height="16"/><circle class="agent" cx="256" cy="727" r="11"/><use class="bot" href="#i-agent" x="248.0" y="718.5" width="16" height="16"/><circle class="agent" cx="284" cy="727" r="11"/><use class="bot" href="#i-agent" x="276.0" y="718.5" width="16" height="16"/><circle class="agent" cx="200" cy="755" r="11"/><use class="bot" href="#i-agent" x="192.0" y="746.5" width="16" height="16"/><circle class="agent" cx="228" cy="755" r="11"/><use class="bot" href="#i-agent" x="220.0" y="746.5" width="16" height="16"/><circle class="agent" cx="256" cy="755" r="11"/><use class="bot" href="#i-agent" x="248.0" y="746.5" width="16" height="16"/><circle class="agent" cx="284" cy="755" r="11"/><use class="bot" href="#i-agent" x="276.0" y="746.5" width="16" height="16"/></g>
+      <g class="hop near" transform="translate(35.5 172)"><circle r="10.5"/><text class="step-n" y="4">1</text><text class="step-t" x="18" y="4.5">register</text></g>
+      <g class="hop near" transform="translate(35.5 196)"><circle r="10.5"/><text class="step-n" y="4">2</text><text class="step-t" x="18" y="4.5">pay NEAR in</text></g>
+      <text x="53.5" y="354.5" class="does left">locks NEAR</text>
+      <text x="53.5" y="378.5" class="does left">and pays it out</text>
+      <g class="hop mid" transform="translate(35.5 561)"><circle r="10.5"/><text class="step-n" y="4">3</text><text class="step-t" x="18" y="4.5">mints wNEAR</text></g>
+      <text x="53.5" y="589.5" class="does left">and burns it</text>
+      <g class="hop mid" transform="translate(35.5 825)"><circle r="10.5"/><text class="step-n" y="4">4</text><text class="step-t" x="18" y="4.5">one asks a question</text></g>
+      <g class="hop mid" transform="translate(35.5 849)"><circle r="10.5"/><text class="step-n" y="4">5</text><text class="step-t" x="18" y="4.5">another asks the model</text></g>
+      <g class="hop mid" transform="translate(35.5 873)"><circle r="10.5"/><text class="step-n" y="4">6</text><text class="step-t" x="18" y="4.5">board checks, then pays</text></g>
+      <text x="53.5" y="1042.5" class="does left">signs the answer</text>
+    </svg>
+  </figure>
+</header>
+
+<section class="stats" id="stats" aria-label="Live numbers"></section>
+
+<section id="how">
+  <div class="section-head">
+    <h2>Two light clients. Nothing in between.</h2>
+  </div>
+  <div class="lanes">
+    <article class="lane">
+      <header class="lane-head">
+        <span class="step">01</span>
+        <h3>Lock on NEAR, mint on Midnight</h3>
+        <p class="lane-way">NEAR contract → lock → proof under a NEAR header → Midnight contract → mint</p>
+        <p class="proven" id="proven-near"></p>
+      </header>
+      <ol class="strip" id="lane-in" tabindex="0" aria-label="What went from NEAR to Midnight, the newest on the right"></ol>
+    </article>
+    <article class="lane">
+      <header class="lane-head">
+        <span class="step">02</span>
+        <h3>Burn on Midnight, release on NEAR</h3>
+        <p class="lane-way">Midnight contract → burn → proof from a finalized block → NEAR contract → pay out</p>
+        <p class="proven" id="proven-midnight"></p>
+      </header>
+      <ol class="strip" id="lane-out" tabindex="0" aria-label="What went from Midnight to NEAR, the newest on the right"></ol>
+    </article>
+  </div>
+  <div class="contracts" id="contracts"></div>
+</section>
+
+<section id="sandbox">
+  <div class="section-head">
+    <p class="kicker">Live sandbox</p>
+    <h2>Ask a model. Compare what you see with what is public.</h2>
+    <p>Every payment and every question is a real zero-knowledge proof and a real transaction, about a minute each. Watch how little of it becomes public.</p>
+  </div>
+  <p class="alert" id="server-note" hidden><svg width="18" height="18"><use href="#i-x"/></svg><span>The sandbox server does not answer right now. The page shows the last state it got and tries again by itself.</span></p>
+  <p class="alert" id="runtime-note" hidden><svg width="18" height="18"><use href="#i-eye"/></svg><span></span></p>
+  <div class="limits">
+    <p class="limit"><strong>Hosted sandbox.</strong> This server holds the agent's keys, so it sees what the agent does. In real use the agent runs on your own machine and nobody sees it.</p>
+    <p class="limit" id="crowd-note" hidden></p>
+  </div>
+
+  <div class="console">
+    <article class="panel band" id="agent">
+      <header class="panel-head">
+        <h3>Your agent</h3>
+      </header>
+      <div class="tour">
+        <ol id="tour-steps"></ol>
+        <p class="tour-facts" id="tour-facts"></p>
+      </div>
+
+      <div id="start" class="starts">
+        <div class="start">
+          <div class="avatar"></div>
+          <div class="start-text">
+            <b>A ready agent</b>
+            <ul class="ready">
+              <li><svg width="16" height="16"><use href="#i-check"/></svg>Registered on NEAR</li>
+              <li><svg width="16" height="16"><use href="#i-check"/></svg>A member on Midnight</li>
+              <li><svg width="16" height="16"><use href="#i-check"/></svg>wNEAR in its wallet</li>
+            </ul>
+          </div>
+          <div class="start-foot"><button id="start-button" class="btn primary"><span>Take a ready agent</span><svg width="18" height="18"><use href="#i-arrow"/></svg></button></div>
+        </div>
+        <div class="start">
+          <div class="avatar fresh"></div>
+          <div class="start-text">
+            <b>An agent from zero</b>
+            <ul class="ready">
+              <li><svg width="16" height="16"><use href="#i-check"/></svg>A new account that gets test NEAR</li>
+              <li class="todo"><svg width="16" height="16"><use href="#i-arrow"/></svg>You make it a member</li>
+              <li class="todo"><svg width="16" height="16"><use href="#i-arrow"/></svg>You pay NEAR in and get wNEAR</li>
+            </ul>
+          </div>
+          <div class="start-foot"><button id="fresh-button" class="btn ghost"><span>Play it through</span><svg width="18" height="18"><use href="#i-arrow"/></svg></button></div>
+        </div>
+        <p id="start-note" class="note"></p>
+      </div>
+
+      <div id="console" class="desk" hidden>
+        <aside>
+          <div class="identity">
+            <div class="avatar" id="id-avatar"></div>
+            <div class="identity-main">
+              <div class="identity-name"><span id="id-name">…</span><span class="chip" id="id-member">opening</span></div>
+              <a id="id-near" class="near-link" target="_blank" rel="noopener"></a>
+              <div class="address" id="id-address-row" hidden><code id="id-address"></code><button class="icon-btn" id="id-copy" title="Copy the shielded address" aria-label="Copy the shielded address"><svg width="15" height="15"><use href="#i-copy"/></svg></button></div>
+            </div>
+          </div>
+          <div class="balance">
+            <div>
+              <p class="label">Balance</p>
+              <p class="amount"><span id="id-balance">…</span> <small>wNEAR</small></p>
+              <p class="note" id="id-balance-near">opening the wallets…</p>
+              <p class="note" id="id-near-balance"></p>
+            </div>
+            <button class="btn small" data-call="balance">Refresh</button>
+          </div>
+          <p class="note" id="id-budget"></p>
+          <button id="end-button" class="link end">End this session</button>
+        </aside>
+        <div>
+          <div class="tabs" id="tabs" role="tablist">
+            <button data-tab="payin" role="tab" aria-selected="false">Pay in</button>
+            <button data-tab="ask" class="on" role="tab" aria-selected="true">Ask</button>
+            <button data-tab="send" role="tab" aria-selected="false">Send</button>
+            <button data-tab="withdraw" role="tab" aria-selected="false">Withdraw</button>
+          </div>
+          <div class="tab" id="tab-payin" hidden>
+            <h4>Become a member</h4>
+            <p class="note" id="member-note">The agent registers its NEAR account at the bridge and proves that to Midnight.</p>
+            <form data-tool="register" class="split-form" id="member-form">
+              <label>Pay in with it <span class="field"><input name="deposit" inputmode="decimal" pattern="[0-9]*[.,]?[0-9]+" placeholder="0.5" data-wnear><span class="unit">NEAR</span></span></label>
+              <div class="quick" data-for="deposit" id="join-sizes"><button type="button">0.5</button></div>
+              <button class="btn solid wide">Register and pay in</button>
+            </form>
+            <form data-tool="deposit" class="split-form">
+              <h4>Pay NEAR in</h4>
+              <label>Amount <span class="field"><input name="amount" inputmode="decimal" pattern="[0-9]*[.,]?[0-9]+" required placeholder="0.1" data-wnear><span class="unit">NEAR</span></span></label>
+              <div class="quick" data-for="amount" id="lock-sizes"><button type="button">0.1</button></div>
+              <button class="btn solid wide">Lock and mint</button>
+              <p class="note">The NEAR is locked on the NEAR contract. Once the Midnight side has followed NEAR past that block, the agent proves the lock and mints the same amount of wNEAR. The sender, the amount and the agent's coin key are public. This takes about a quarter of an hour.</p>
+            </form>
+          </div>
+          <div class="tab" id="tab-ask">
+            <form data-tool="ask" class="ask-form">
+              <h4>Ask a model, pay only for its real answer</h4>
+              <label class="q">Question <textarea name="prompt" required maxlength="300" rows="3" placeholder="What do you want to know?"></textarea></label>
+              <label>Model, running in a TEE on NEAR AI
+                <select name="model">
+                  <option value="Qwen/Qwen3.8-27B">Qwen 3.8 27B</option>
+                  <option value="Qwen/Qwen3.6-35B-A3B-FP8">Qwen 3.6 35B</option>
+                  <option value="deepseek-ai/DeepSeek-V4.1-Flash-1017">DeepSeek V4.1 Flash</option>
+                </select>
+              </label>
+              <label>Answer length
+                <select name="max_tokens" data-number>
+                  <option value="24">a sentence</option>
+                  <option value="64" selected>a short paragraph</option>
+                  <option value="128">a paragraph</option>
+                </select>
+              </label>
+              <label>Reward <span class="field"><input name="reward" inputmode="decimal" pattern="[0-9]*[.,]?[0-9]+" required placeholder="0.02" data-wnear><span class="unit">wNEAR</span></span></label>
+              <div class="quick" data-for="reward"><button type="button">0.01</button><button type="button">0.02</button><button type="button">0.05</button></div>
+              <button class="btn solid wide">Post the question</button>
+              <p class="note">The question is public, so put nothing into it that names you. An answer takes about ten minutes here and has 30 minutes for it, and the least reward is <span data-least-reward>0.01</span> wNEAR.</p>
+            </form>
+          </div>
+          <div class="tab" id="tab-send" hidden>
+            <form data-tool="send" class="split-form">
+              <h4>Send to a shielded address</h4>
+              <label>Shielded address <input name="to" required placeholder="mn_shield-addr…"></label>
+              <label>Amount <span class="field"><input name="amount" inputmode="decimal" pattern="[0-9]*[.,]?[0-9]+" required placeholder="0.01" data-wnear><span class="unit">wNEAR</span></span></label>
+              <button class="btn solid wide">Send</button>
+              <p class="note">The chain shows neither sender nor recipient nor amount. The fee gateway of this sandbox is told the amount.</p>
+            </form>
+          </div>
+
+          <div class="tab" id="tab-withdraw" hidden>
+            <form data-tool="withdraw" class="split-form">
+              <h4>Back to NEAR, to any account</h4>
+              <label>Amount <span class="field"><input name="amount" inputmode="decimal" pattern="[0-9]*[.,]?[0-9]+" required placeholder="0.1" data-wnear><span class="unit">wNEAR</span></span></label>
+              <div class="quick" data-for="amount"><button type="button">0.1</button><button type="button">0.2</button></div>
+              <label>NEAR account that is paid <input name="to" placeholder="any testnet account, such as you.testnet"></label>
+              <button class="btn solid wide">Withdraw</button>
+              <p class="note">The wNEAR is burned on Midnight. A relay proves that to the NEAR contract, which pays the account you name, or the agent's own when you name none. The amount and the NEAR recipient are public.</p>
+            </form>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <article class="panel" id="activity">
+      <header class="panel-head">
+        <h3>What you see</h3>
+        <span class="tag private"><svg width="14" height="14"><use href="#i-eye-off"/></svg>only you</span>
+      </header>
+      <div class="panel-body">
+        <div id="mine" hidden>
+          <h4>My questions</h4>
+          <ul id="asks" class="asks"></ul>
+          <p class="note" id="asks-empty">Nothing asked yet.</p>
+          <div class="button-row">
+            <button class="btn small" data-call="bounties">Read my answers</button>
+            <button class="btn small" id="take-back">Take back overdue rewards</button>
+          </div>
+          <p class="note">A question nobody answered within its 30 minutes keeps its reward on the board until the agent takes it back.</p>
+        </div>
+        <h4>Calls</h4>
+        <ol id="jobs" class="jobs"></ol>
+        <p class="empty" id="jobs-empty">Your agent's calls appear here, each with its duration and its transaction.</p>
+      </div>
+    </article>
+
+    <article class="panel" id="asked">
+      <header class="panel-head">
+        <h3>Questions on the board</h3>
+        <span class="tag public"><svg width="14" height="14"><use href="#i-eye"/></svg>public</span>
+      </header>
+      <p class="panel-says">A question shows its text, model and reward. Not who asked, and not the answer.</p>
+
+      <ul id="bounties" class="rows all"></ul>
+    </article>
+  </div>
+  <p class="note" id="chain-note">Reading both chains…</p>
+</section>
+
+<section id="answers">
+  <div class="section-head">
+    <p class="kicker">Private answers</p>
+    <h2>No account, no payment, no name at the AI provider.</h2>
+    <p>The model runs in a TEE on NEAR AI. Your agent has no account there, pays from a shielded balance and shows only as a member.</p>
+  </div>
+
+  <aside class="peg" id="breach">
+    <div class="peg-story">
+      <p class="kicker">Why it matters now</p>
+      <h3 class="sub-head">8 November 2026: a breach at an AI provider</h3>
+      <p>NEAR AI reported it openly the next day. An attacker used a flaw in the SGLang inference engine to run code on one inference server. Account details of about 100 users were taken: email address, name, and for some the plan and balance. Requests processed on that server that day could have been observed, including those in confidential mode. <a href="https://near.ai/blog/security-incident-report-sglang-vulnerability" target="_blank" rel="noopener">NEAR AI's incident report</a></p>
+    </div>
+    <article class="card unseen">
+      <h3><svg width="18" height="18"><use href="#i-eye-off"/></svg>What such a breach cannot find about a member</h3>
+      <ul>
+        <li>An account. A member has none there: no email address, no name, no plan, no balance.</li>
+        <li>A payment. The reward moves on Midnight, from a shielded balance.</li>
+        <li>Who asked. An observed request comes from the solver's account.</li>
+      </ul>
+    </article>
+    <article class="card seen">
+      <h3><svg width="18" height="18"><use href="#i-eye"/></svg>What it still reaches</h3>
+      <ul>
+        <li>The question. It is public on the board anyway.</li>
+        <li>The solver's own account, like any customer's.</li>
+        <li>Forged answers, if the attacker controls the model's TEE. The contract trusts that TEE's key, so a question risks its reward.</li>
+      </ul>
+    </article>
+  </aside>
+
+  <div id="public">
+    <h3 class="sub-head">What is public, said plainly.</h3>
+    <table class="ledger">
+      <thead>
+        <tr>
+          <td></td>
+          <th scope="col" class="seen"><svg width="16" height="16"><use href="#i-eye"/></svg>Everyone sees</th>
+          <th scope="col" class="unseen"><svg width="16" height="16"><use href="#i-eye-off"/></svg>Nobody sees</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th scope="row">Questions</th>
+          <td><p class="sees"><svg width="15" height="15"><use href="#i-eye"/></svg><span>A question's text, model and reward, and that it was answered.</span></p></td>
+          <td><p class="hides"><svg width="15" height="15"><use href="#i-eye-off"/></svg><span>Who asked a model, and who fetched the answer.</span></p></td>
+        </tr>
+        <tr>
+          <th scope="row">Answers</th>
+          <td><p class="sees"><svg width="15" height="15"><use href="#i-eye"/></svg><span>The length and the hash of a sealed answer.</span></p></td>
+          <td><p class="hides"><svg width="15" height="15"><use href="#i-eye-off"/></svg><span>What the model answered. Only the asker and the solver that fetched it know.</span></p></td>
+        </tr>
+        <tr>
+          <th scope="row">The bridge</th>
+          <td>
+            <p class="sees"><svg width="15" height="15"><use href="#i-eye"/></svg><span>That an account registered.</span></p>
+            <p class="sees"><svg width="15" height="15"><use href="#i-eye"/></svg><span>A lock: the NEAR sender, the amount and the recipient's coin key.</span></p>
+            <p class="sees"><svg width="15" height="15"><use href="#i-eye"/></svg><span>A withdrawal: the amount and the NEAR recipient.</span></p>
+          </td>
+          <td><p class="hides"><svg width="15" height="15"><use href="#i-eye-off"/></svg><span>Who paid whom between lock and withdrawal.</span></p></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="more-list">
+    <details class="more">
+      <summary><h3>How a question is asked, checked and paid</h3></summary>
+      <div class="cards two">
+        <article class="card">
+          <span class="step">01</span>
+          <h3>Act as a member</h3>
+          <p>An agent registers once with a commitment to a secret. From then on it proves "I am a member" without saying which one. It pays other members and asks models. The contract settles a question fairly: the answer's key for the reward, in one call.</p>
+        </article>
+        <article class="card">
+          <span class="step">02</span>
+          <h3>A member asks</h3>
+          <p>The question goes on the board with its reward. It names the model, the hash of the exact request and the keys of the model's attested TEEs. The contract keeps the reward. Its proof says that a member asks, not which one.</p>
+        </article>
+        <article class="card">
+          <span class="step">03</span>
+          <h3>A solver asks the model</h3>
+          <p>Any member can run the request on NEAR AI. The TEE signs the model's name with the hashes of request and response. The solver seals the response on the board, proven to have that hash.</p>
+        </article>
+        <article class="card">
+          <span class="step">04</span>
+          <h3>The contract checks and pays</h3>
+          <p>One circuit verifies the TEE's ed25519 signature over this request and this sealed answer. In the same call the key goes to the asker and the reward to the solver. Without an answer the asker takes the reward back.</p>
+        </article>
+      </div>
+    </details>
+    <details class="more">
+      <summary><h3>Who learns what when you ask</h3></summary>
+      <div class="who">
+        <article class="card">
+          <h3>NEAR AI</h3>
+          <p class="sees"><svg width="15" height="15"><use href="#i-eye"/></svg><span>The question, sent from the solver's account.</span></p>
+          <p class="hides"><svg width="15" height="15"><use href="#i-eye-off"/></svg><span>Who asked. You have no account there, so a breach there cannot show it.</span></p>
+        </article>
+        <article class="card">
+          <h3>The solver</h3>
+          <p class="sees"><svg width="15" height="15"><use href="#i-eye"/></svg><span>The question and the answer it fetched.</span></p>
+          <p class="hides"><svg width="15" height="15"><use href="#i-eye-off"/></svg><span>Who asked, and whose coin pays it.</span></p>
+        </article>
+        <article class="card">
+          <h3>Everyone else</h3>
+          <p class="sees"><svg width="15" height="15"><use href="#i-eye"/></svg><span>The question, the model, the reward and that an answer came.</span></p>
+          <p class="hides"><svg width="15" height="15"><use href="#i-eye-off"/></svg><span>Who asked, who solved, and the answer.</span></p>
+        </article>
+        <article class="card">
+          <h3>You</h3>
+          <p class="sees"><svg width="15" height="15"><use href="#i-check"/></svg><span>The answer, sealed for a key only your agent holds.</span></p>
+          <p class="sees"><svg width="15" height="15"><use href="#i-check"/></svg><span>The contract's check that the model's TEE signed it.</span></p>
+        </article>
+      </div>
+    </details>
+    <details class="more" id="crowd-part" hidden>
+      <summary><h3>A crowd to hide in</h3></summary>
+      <div class="cards" id="crowd-cards"></div>
+    </details>
+  </div>
+</section>
+
+<section id="run">
+  <div class="section-head">
+    <h2>Run it with your own agent.</h2>
+  </div>
+  <div class="runs">
+    <article class="card code">
+      <h3>Check the live contracts</h3>
+      <p class="note">Needs Node 22 and no key or funds.</p>
+      <pre><code>npm install
+cp .env.example .env
+cd kit &amp;&amp; npm run status</code></pre>
+    </article>
+    <article class="card code">
+      <h3>One agent over MCP</h3>
+      <p class="note">Its tools: whoami, balance, register, deposit, send, withdraw, withdrawal, ask, bounties, solve, refund, collect. A call that changes something is a real proof and a real transaction.</p>
+      <pre><code>{
+  "mcpServers": {
+    "lightsout-alice": {
+      "command": "npx",
+      "args": [
+        "tsx",
+        "--env-file=&lt;repo&gt;/.env",
+        "&lt;repo&gt;/mcp/src/server.ts"
+      ],
+      "env": {
+        "LIGHTSOUT_AGENT": "alice"
+      }
+    }
+  }
+}</code></pre>
+    </article>
+  </div>
+</section>
+
+<footer>
+  <span class="logo small"><svg width="20" height="20"><use href="#i-logo"/></svg><span>LIGHTS<i>OUT</i></span></span>
+  <nav class="foot-links" aria-label="Sections of this page">
+    <a href="#how">The bridge</a>
+    <a href="#sandbox">Sandbox</a>
+    <a href="#answers">Private answers</a>
+    <a href="#run">Run it yourself</a>
+  </nav>
+  <span>Built at NEAR HACKATHON. NEAR testnet and Midnight preview, test funds only. Apache-2.0.</span>
+</footer>
+
+<div id="toast" class="toast" role="status" hidden></div>
+<script src="app.js" type="module"></script>
+</body>
+</html>

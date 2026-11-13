@@ -1,0 +1,30 @@
+{
+  "name": "lightsout",
+  "private": true,
+  "license": "Apache-2.0",
+  "workspaces": [
+    "kit",
+    "mcp",
+    "web",
+    "contracts/midnight-bridge",
+    "contracts/board",
+    "crates/burn-proof-js"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "npm test -w kit -w mcp -w web -w contracts/midnight-bridge -w contracts/board",
+    "typecheck": "npm run typecheck -w kit -w mcp -w web"
+  },
+  "overrides": {
+    "@midnightntwrk/ledger-v9": "1.0.0",
+    "@midnightntwrk/onchain-runtime-v4": "4.0.0",
+    "@midnightntwrk/wallet-sdk-address-format": "4.0.0",
+    "@midnight-ntwrk/zkir-v2": "2.2.0",
+    "@midnight-ntwrk/midnight-js-protocol": {
+      "@midnight-ntwrk/compact-runtime": "0.21.0",
+      "@midnight-ntwrk/compact-js": "3.0.0"
+    }
+  }
+}

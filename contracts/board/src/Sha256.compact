@@ -1,0 +1,110 @@
+// SHA-256 one block at a time, so a contract can hash a message of any length across calls.
+module Sha256 {
+  import CompactStandardLibrary;
+
+  // A 32-bit word, most significant bit first: its bits, each bit b as the sign 1 - 2b, and its value.
+  struct Word { bits: Vector<32, Boolean>; signs: Vector<32, Field>; val: Field; }
+
+  struct Run { window: Vector<16, Word>; vars: Vector<8, Word>; }
+
+  // The prover supplies the 35 bits of a number below 2^35, most significant first.
+  witness bitsOf(x: Field): Vector<35, Boolean>;
+
+  // Reduces a sum of at most seven words modulo 2^32. The bits are checked against the sum.
+  circuit reduce(sum: Field): Word {
+    const bits = disclose(bitsOf(sum));
+    const packed = fold((acc: Field, bit: Boolean): Field => acc * 2 + (bit as Field), 0 as Field, bits);
+    assert(packed == sum, "bits do not match the sum");
+    const carry = (bits[0] as Field) * 4 + (bits[1] as Field) * 2 + (bits[2] as Field);
+    const low = slice<32>(bits, 3);
+    // The field's -2.
+    const minusTwo = 52435875175126190479447740508185965837690552500527637822603658699938581184511 as Field;
+    return Word { bits: low, signs: map((bit: Boolean): Field => 1 + (bit as Field) * minusTwo, low), val: sum - carry * 4294967296 };
+  }
+
+  // The value of x ^ y ^ z, from signs. A product of signs is the sign of the XOR.
+  circuit xor3(x: Vector<32, Field>, y: Vector<32, Field>, z: Vector<32, Field>): Field {
+    const half = 26217937587563095239723870254092982918845276250263818911301829349969290592257 as Field;
+    return (4294967295 - fold((acc: Field, a: Field, b: Field, c: Field): Field => acc * 2 + a * b * c, 0 as Field, x, y, z)) * half;
+  }
+
+  // The value of (e & f) ^ (~e & g), which is g plus e times (f - g) bit by bit.
+  circuit choose(e: Word, f: Word, g: Word): Field {
+    return g.val + fold((acc: Field, a: Boolean, b: Boolean, c: Boolean): Field =>
+      acc * 2 + (a as Field) * ((b as Field) - (c as Field)), 0 as Field, e.bits, f.bits, g.bits);
+  }
+
+  // The value of the bitwise majority: a + b + c is the XOR plus twice the majority.
+  circuit majority(a: Word, b: Word, c: Word): Field {
+    const half = 26217937587563095239723870254092982918845276250263818911301829349969290592257 as Field;
+    return (a.val + b.val + c.val - xor3(a.signs, b.signs, c.signs)) * half;
+  }
+
+  circuit bigSigma0(x: Vector<32, Field>): Field {
+    return xor3([...slice<2>(x, 30), ...slice<30>(x, 0)], [...slice<13>(x, 19), ...slice<19>(x, 0)], [...slice<22>(x, 10), ...slice<10>(x, 0)]);
+  }
+
+  circuit bigSigma1(x: Vector<32, Field>): Field {
+    return xor3([...slice<6>(x, 26), ...slice<26>(x, 0)], [...slice<11>(x, 21), ...slice<21>(x, 0)], [...slice<25>(x, 7), ...slice<7>(x, 0)]);
+  }
+
+  // A shift fills with zero bits, whose sign is 1.
+  circuit smallSigma0(x: Vector<32, Field>): Field {
+    const one = 1 as Field;
+    const zero: Vector<3, Field> = [one, one, one];
+    return xor3([...slice<7>(x, 25), ...slice<25>(x, 0)], [...slice<18>(x, 14), ...slice<14>(x, 0)], [...zero, ...slice<29>(x, 0)]);
+  }
+
+  circuit smallSigma1(x: Vector<32, Field>): Field {
+    const one = 1 as Field;
+    const zero: Vector<10, Field> = [one, one, one, one, one, one, one, one, one, one];
+    return xor3([...slice<17>(x, 15), ...slice<15>(x, 0)], [...slice<19>(x, 13), ...slice<13>(x, 0)], [...zero, ...slice<22>(x, 0)]);
+  }
+
+  // One round over the working variables a to h.
+  circuit round(v: Vector<8, Word>, k: Field, w: Field): Vector<8, Word> {
+    const t1 = v[7].val + bigSigma1(v[4].signs) + choose(v[4], v[5], v[6]) + k + w;
+    const t2 = bigSigma0(v[0].signs) + majority(v[0], v[1], v[2]);
+    return [reduce(t1 + t2), v[0], v[1], v[2], reduce(v[3].val + t1), v[4], v[5], v[6]];
+  }
+
+  // The message word sixteen places after the first word of the window.
+  circuit extend(w: Vector<16, Word>): Word {
+    return reduce(smallSigma1(w[14].signs) + w[9].val + smallSigma0(w[1].signs) + w[0].val);
+  }
+
+  // A word from four bytes, most significant first.
+  export circuit bigEndian(v: Vector<4, Uint<8>>): Field {
+    return (v[0] as Field) * 16777216 + (v[1] as Field) * 65536 + (v[2] as Field) * 256 + (v[3] as Field);
+  }
+
+  // The state before the first block.
+  export circuit initialState(): Vector<8, Field> {
+    return [0x6a09e667 as Field, 0xbb67ae85 as Field, 0x3c6ef372 as Field, 0xa54ff53a as Field,
+      0x510e527f as Field, 0x9b05688c as Field, 0x1f83d9ab as Field, 0x5be0cd19 as Field];
+  }
+
+  // The compression function: the state after one block of sixteen words. Every value is below 2^32.
+  export circuit compress(state: Vector<8, Field>, block: Vector<16, Field>): Vector<8, Field> {
+    const early: Vector<48, Uint<32>> = [
+      0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
+      0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
+      0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
+      0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
+      0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
+      0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070
+    ];
+    const late: Vector<16, Uint<32>> = [
+      0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
+      0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
+    ];
+    const before = map((x: Field): Word => reduce(x), state);
+    const start = Run { window: map((x: Field): Word => reduce(x), block), vars: before };
+    // Rounds 0 to 47 also extend the message schedule; the last sixteen only consume it.
+    const middle = fold((run: Run, k: Uint<32>): Run =>
+      Run { window: [...slice<15>(run.window, 1), extend(run.window)], vars: round(run.vars, k as Field, run.window[0].val) },
+      start, early);
+    const after = fold((v: Vector<8, Word>, k: Uint<32>, w: Word): Vector<8, Word> => round(v, k as Field, w.val), middle.vars, late, middle.window);
+    return map((x: Word, y: Word): Field => reduce(x.val + y.val).val, before, after);
+  }
+}

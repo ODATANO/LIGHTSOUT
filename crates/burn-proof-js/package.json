@@ -1,0 +1,13 @@
+{
+  "name": "lightsout-burn-proof",
+  "version": "0.1.0",
+  "private": true,
+  "description": "The extrinsic proof and the bridge logs of a Midnight transaction, built in Rust for Node",
+  "license": "Apache-2.0",
+  "main": "pkg/burn_proof_js.js",
+  "types": "pkg/burn_proof_js.d.ts",
+  "files": ["pkg"],
+  "scripts": {
+    "build": "bash build.sh"
+  }
+}

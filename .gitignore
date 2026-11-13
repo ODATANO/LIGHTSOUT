@@ -1,0 +1,25 @@
+node_modules/
+dist/
+target/
+.env
+.env.*
+!.env.example
+local_docs/
+.claude/
+scratch/
+out/
+.wallet/
+# Screenshots taken while working on the page
+/image*.png
+# Prover keys are rebuilt by compact compile
+contracts/*/managed/**/keys/*.prover
+# Several MB of readable circuit each; provers load the .bzkir next to it
+contracts/midnight-bridge/managed/**/zkir/absorb.zkir
+contracts/board/managed/**/zkir/seal_block.zkir
+contracts/board/managed/**/zkir/seal_finish.zkir
+# The proving parameters and proofs of the NEAR light circuit
+contracts/midnight-bridge/params/
+contracts/midnight-bridge/out/
+# What a hosted deployment keeps beside deploy/compose.yml
+deploy/keys/
+deploy/wallet/

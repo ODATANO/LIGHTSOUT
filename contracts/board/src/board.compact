@@ -1,0 +1,418 @@
+pragma language_version >= 0.26;
+import CompactStandardLibrary;
+import "Sha256";
+
+// A public board for members of the bridge: rewards for answers of a NEAR AI model that the
+// contract checks itself. A solver seals the answer on the board as a "drop". The drop's
+// ciphertext is proven to be the answer under the key that the asker gets.
+
+contract Bridge {
+  circuit known_root(root: MerkleTreeDigest): [];
+}
+
+// day is the day the drop was opened, which decides how long it answers and how long it is kept.
+struct Drop { key_hash: Bytes<32>; content_hash: Bytes<32>; length: Uint<32>; payout: Bytes<32>; day: Uint<32>; }
+
+// How far a drop's content is absorbed: content bytes left, whether the 0x80 byte after them is
+// passed, blocks stored. chain commits to the SHA-256 state and the key under a private blind.
+struct Seal { remaining: Uint<32>; ended: Boolean; blocks: Uint<32>; chain: Field; done: Boolean; }
+
+// The content key for one buyer. point is nonce * G. masked is the key plus the hash of the two
+// coordinates of nonce * buyer, which the buyer gets as its secret * point.
+struct Handover { point: JubjubPoint; masked: Field; }
+
+// A reward for an answer of a NEAR AI model to one exact request. model is the model's name with
+// zeros after it. keys are the ed25519 keys of the TEEs the requester attested, unused ones zero.
+struct Bounty {
+  request_hash: Bytes<32>; model: Bytes<48>; model_length: Uint<8>; keys: Vector<4, Bytes<32>>;
+  buyer: JubjubPoint; refund_to: Bytes<32>; deadline: Uint<64>;
+}
+
+// The exact request bytes of a bounty with zeros after them, for any solver to read.
+struct Request { text: Bytes<512>; length: Uint<16>; }
+
+// The drop that answered a bounty, and the handover of its key to the bounty's buyer.
+struct Answer { drop: Bytes<32>; handover: Handover; }
+
+export sealed ledger bridge: Bridge;
+export sealed ledger token: Bytes<32>;
+export ledger drops: Map<Bytes<32>, Drop>;
+export ledger seals: Map<Bytes<32>, Seal>;
+// Per drop and block, the block's sixteen words in three field elements, each plus a mask.
+export ledger cipher: Map<Bytes<32>, Map<Uint<32>, Vector<3, Field>>>;
+// Per day, one mark per member and slot that was used.
+export ledger marks: Map<Uint<32>, Set<Bytes<32>>>;
+// A bounty's id is `bountyId` of its terms and its reward.
+export ledger bounties: Map<Bytes<32>, Bounty>;
+// Per bounty the request its requester published. Length zero: the request travels another way.
+export ledger requests: Map<Bytes<32>, Request>;
+// The reward of every bounty that is neither answered nor refunded.
+export ledger rewards: Map<Bytes<32>, QualifiedShieldedCoinInfo>;
+export ledger answers: Map<Bytes<32>, Answer>;
+
+witness memberSecret(): Bytes<32>;
+witness memberPath(leaf: Bytes<32>): MerkleTreePath<16, Bytes<32>>;
+// Which of the member's 32 actions of the day this is, 0 to 31.
+witness memberSlot(): Uint<8>;
+witness contentKey(): Field;
+witness contentBlock(): Bytes<64>;
+// The eight words of the SHA-256 state the stored commitment hides.
+witness sealState(): Vector<8, Uint<32>>;
+// The blind of the stored chain commitment, and a fresh one for the next.
+witness sealBlind(): Field;
+witness sealNextBlind(): Field;
+witness handoverNonce(): JubjubScalar;
+// The coin secret key of the wallet that sends a refund.
+witness coinSecretKey(): Bytes<32>;
+// The eight bits of a byte, most significant first.
+witness bitsOfByte(x: Uint<8>): Vector<8, Boolean>;
+// A byte's lowest bit and its other seven bits.
+witness lowBit(x: Uint<8>): [Boolean, Uint<7>];
+
+constructor(bridge_address: Bridge, color: Bytes<32>) {
+  bridge = disclose(bridge_address);
+  token = disclose(color);
+}
+
+// A bounty's deadline lies at most 30 days ahead. Its records stay 30 days past the deadline,
+// and for that long only the holder of the refund key can take an unanswered reward back.
+circuit bountyTime(): Uint<64> { return 2592000; }
+// A drop answers a bounty for 7 days from the day it was opened and is kept for 37, so the
+// buyer of its last answer has 30 days to read it.
+circuit dropAnswersDays(): Uint<32> { return 7; }
+circuit dropKeptDays(): Uint<32> { return 37; }
+
+// Passes when the sender knows the secret behind a commitment in the bridge's member tree, at most
+// 32 times per member and day. epoch is the day, the block time in seconds divided by 86400.
+// Public are the day, the tree root and the mark, which only the secret links to the member.
+circuit prove_member(epoch: Uint<32>): [] {
+  const day = disclose(epoch);
+  assert(!kernel.blockTimeLessThan(day * 86400), "the day has not begun");
+  assert(kernel.blockTimeLessThan(day * 86400 + 86400), "the day has passed");
+  const secret = memberSecret() as Vector<32, Uint<8>>;
+  // The bridge's member tree holds commitments under this tag.
+  const leaf = persistentHash<Bytes<64>>([...(pad(32, "lightsout:member") as Vector<32, Uint<8>>), ...secret] as Bytes<64>);
+  const path = memberPath(leaf);
+  assert(path.leaf == leaf, "the path is for another leaf");
+  bridge.known_root(disclose(merkleTreePathRoot<16, Bytes<32>>(path)));
+  const slot = memberSlot();
+  assert(slot < 32, "no such slot");
+  const mark = disclose(persistentHash<Bytes<128>>([
+    ...(pad(32, "lightsout:mark") as Vector<32, Uint<8>>), ...secret,
+    ...(((day as Field) as Bytes<32>) as Vector<32, Uint<8>>), ...(((slot as Field) as Bytes<32>) as Vector<32, Uint<8>>)
+  ] as Bytes<128>));
+  if (!marks.member(day)) {
+    marks.insert(day, default<Set<Bytes<32>>>);
+  }
+  assert(!marks.lookup(day).member(mark), "this slot of the day is used");
+  marks.lookup(day).insert(mark);
+}
+
+// Removes the marks of a day that has passed. No member proof of that day passes any more.
+export circuit forget_marks(epoch: Uint<32>): [] {
+  const day = disclose(epoch);
+  assert(marks.member(day), "that day has no marks");
+  assert(!kernel.blockTimeLessThan(day * 86400 + 86400), "the day has not passed");
+  marks.remove(day);
+}
+
+circuit packed(words: Vector<4, Field>): Field {
+  return fold((acc: Field, w: Field): Field => acc * 4294967296 + w, 0 as Field, words);
+}
+
+circuit hidden(state: Vector<8, Field>, key: Field, blind: Field): Field {
+  return transientCommit<Vector<3, Field>>([packed(slice<4>(state, 0)), packed(slice<4>(state, 4)), key], blind);
+}
+
+circuit wordsOf(bytes: Vector<64, Uint<8>>): Vector<16, Field> {
+  return [
+    bigEndian(slice<4>(bytes, 0)), bigEndian(slice<4>(bytes, 4)), bigEndian(slice<4>(bytes, 8)), bigEndian(slice<4>(bytes, 12)),
+    bigEndian(slice<4>(bytes, 16)), bigEndian(slice<4>(bytes, 20)), bigEndian(slice<4>(bytes, 24)), bigEndian(slice<4>(bytes, 28)),
+    bigEndian(slice<4>(bytes, 32)), bigEndian(slice<4>(bytes, 36)), bigEndian(slice<4>(bytes, 40)), bigEndian(slice<4>(bytes, 44)),
+    bigEndian(slice<4>(bytes, 48)), bigEndian(slice<4>(bytes, 52)), bigEndian(slice<4>(bytes, 56)), bigEndian(slice<4>(bytes, 60))
+  ];
+}
+
+// The ciphertext of block number index: words 0 to 6, 7 to 13 and 14 to 15 as three numbers,
+// each plus the hash of the key and its position.
+circuit encrypt(words: Vector<16, Field>, key: Field, index: Field): Vector<3, Field> {
+  const a = fold((acc: Field, w: Field): Field => acc * 4294967296 + w, 0 as Field, slice<7>(words, 0));
+  const b = fold((acc: Field, w: Field): Field => acc * 4294967296 + w, 0 as Field, slice<7>(words, 7));
+  const c = fold((acc: Field, w: Field): Field => acc * 4294967296 + w, 0 as Field, slice<2>(words, 14));
+  return [
+    a + transientHash<Vector<2, Field>>([key, index * 3]),
+    b + transientHash<Vector<2, Field>>([key, index * 3 + 1]),
+    c + transientHash<Vector<2, Field>>([key, index * 3 + 2])
+  ];
+}
+
+// Absorbs one block into the hidden SHA-256 state and stores its ciphertext. Returns the state
+// after the block and the commitment to it.
+circuit absorb(at: Bytes<32>, seal: Seal, key: Field, bytes: Vector<64, Uint<8>>): [Vector<8, Field>, Field] {
+  const before = map((word: Uint<32>): Field => word as Field, sealState());
+  assert(hidden(before, key, sealBlind()) == seal.chain, "not the hidden state");
+  const words = wordsOf(bytes);
+  // disclose keeps the compiler's leak analysis short. Neither value reaches the ledger in the clear.
+  const state = compress(disclose(before), disclose(words));
+  cipher.lookup(at).insert(seal.blocks, disclose(encrypt(words, key, seal.blocks as Field)));
+  return [state, disclose(hidden(state, key, sealNextBlind()))];
+}
+
+// Opens a drop: its key's hash, its content's SHA-256 hash and byte length, and the coin public
+// key that a reward for it is paid to. Only the sender can seal it afterwards. The length bounds
+// the calls that seal it.
+export circuit seal_begin(id: Bytes<32>, key_hash: Bytes<32>, content_hash: Bytes<32>, length: Uint<32>, payout: Bytes<32>, epoch: Uint<32>): [] {
+  prove_member(epoch);
+  const at = disclose(id);
+  assert(length <= 4096, "the content is longer than 4096 bytes");
+  assert(!drops.member(at), "this drop exists");
+  drops.insert(at, Drop { key_hash: disclose(key_hash), content_hash: disclose(content_hash), length: disclose(length), payout: disclose(payout), day: disclose(epoch) });
+  seals.insert(at, Seal { remaining: disclose(length), ended: false, blocks: 0, chain: disclose(hidden(initialState(), contentKey(), sealNextBlind())), done: false });
+  cipher.insert(at, default<Map<Uint<32>, Vector<3, Field>>>);
+}
+
+// Stores the ciphertext of the next 64 bytes of the content.
+export circuit seal_block(id: Bytes<32>): [] {
+  const at = disclose(id);
+  assert(seals.member(at), "no such drop");
+  const seal = seals.lookup(at);
+  assert(!seal.done, "the drop is sealed");
+  assert(seal.remaining >= 64, "no full block remains");
+  const next = absorb(at, seal, contentKey(), contentBlock() as Vector<64, Uint<8>>);
+  seals.insert(at, Seal { remaining: (seal.remaining - 64) as Uint<32>, ended: false, blocks: (seal.blocks + 1) as Uint<32>, chain: next[1], done: false });
+}
+
+// Where the padding stands: content bytes left, and 1 once the 0x80 byte is passed.
+struct Pad { left: Field; ended: Field; }
+
+// One byte of a padded block. Content bytes are free, then 0x80, then zeros; skip = 1 checks nothing.
+circuit padStep(p: Pad, byte: Uint<8>, skip: Field): Pad {
+  const b = byte as Field;
+  const zero = 0 as Field;
+  const live = (1 - skip) * (1 - p.ended);
+  const marker = live * ((p.left == zero) as Field);
+  assert(marker * (b - 128) == zero, "the byte after the content must be 0x80");
+  assert((1 - skip) * p.ended * b == zero, "padding must be zero");
+  return Pad { left: p.left - (live - marker), ended: p.ended + marker };
+}
+
+// Stores the ciphertext of the rest of the content with its SHA-256 padding. With fewer than 56
+// bytes left the block is the last one and must reach the content's hash, which seals the drop.
+// Otherwise a second call takes the block that holds only padding.
+export circuit seal_finish(id: Bytes<32>): [] {
+  const at = disclose(id);
+  assert(seals.member(at), "no such drop");
+  const seal = seals.lookup(at);
+  assert(!seal.done, "the drop is sealed");
+  assert(seal.remaining < 64, "full blocks remain");
+  const drop = drops.lookup(at);
+  const key = contentKey();
+  assert(persistentHash<Field>(key) == drop.key_hash, "not the key behind the hash");
+  const bytes = contentBlock() as Vector<64, Uint<8>>;
+  const zero = 0 as Field;
+  const body = fold((p: Pad, byte: Uint<8>): Pad => padStep(p, byte, 0 as Field), Pad { left: seal.remaining as Field, ended: seal.ended as Field }, slice<56>(bytes, 0));
+  // Once the content ended before byte 56, the last eight bytes are the bit length.
+  const closing = body.ended;
+  const back = fold((p: Pad, byte: Uint<8>): Pad => padStep(p, byte, closing), body, slice<8>(bytes, 56));
+  const trailer = fold((acc: Field, byte: Uint<8>): Field => acc * 256 + (byte as Field), zero, slice<8>(bytes, 56));
+  assert(closing * (trailer - (drop.length as Field) * 8) == zero, "the length in the padding is wrong");
+  const next = absorb(at, seal, key, bytes);
+  const want = drop.content_hash as Vector<32, Uint<8>>;
+  const digest: Vector<8, Field> = [
+    bigEndian(slice<4>(want, 0)), bigEndian(slice<4>(want, 4)), bigEndian(slice<4>(want, 8)), bigEndian(slice<4>(want, 12)),
+    bigEndian(slice<4>(want, 16)), bigEndian(slice<4>(want, 20)), bigEndian(slice<4>(want, 24)), bigEndian(slice<4>(want, 28))
+  ];
+  assert(closing * (1 - ((next[0] == digest) as Field)) == zero, "the content does not match its hash");
+  seals.insert(at, Seal {
+    remaining: 0, ended: disclose(back.ended == (1 as Field)), blocks: (seal.blocks + 1) as Uint<32>, chain: next[1], done: disclose(closing == (1 as Field))
+  });
+}
+
+// A content key for the holder of buyer alone, under a fresh one-time point.
+circuit handOver(buyer: JubjubPoint, key: Field): Handover {
+  const nonce = handoverNonce();
+  const shared = ecMul(buyer, nonce);
+  const mask = transientHash<Vector<2, Field>>([jubjubPointX(shared), jubjubPointY(shared)]);
+  return Handover { point: disclose(ecMulGenerator(nonce)), masked: disclose(key + mask) };
+}
+
+// Removes a drop with its sealing state and its ciphertext once it is kept no longer.
+export circuit forget_drop(id: Bytes<32>): [] {
+  const at = disclose(id);
+  assert(drops.member(at), "no such drop");
+  assert(!kernel.blockTimeLessThan((drops.lookup(at).day + dropKeptDays()) * 86400), "the drop is still kept");
+  drops.remove(at);
+  seals.remove(at);
+  cipher.remove(at);
+}
+
+// What a bounty's id commits to: every term and the reward, so that no bounty of other terms
+// can take its place. The request text is not among them: a reader checks it against the hash.
+struct Posted { tag: Bytes<32>; terms: Bounty; reward: Uint<128>; }
+
+export pure circuit bountyId(terms: Bounty, reward: Uint<128>): Bytes<32> {
+  return persistentHash<Posted>(Posted { tag: pad(32, "lightsout:bounty"), terms: terms, reward: reward });
+}
+
+// Puts a reward on an answer of a NEAR AI model to one exact request. The contract keeps the coin
+// until a member answers or the deadline passes. buyer is the point the answer's key is handed to.
+export circuit post_bounty(
+  request_hash: Bytes<32>, model: Bytes<48>, model_length: Uint<8>, keys: Vector<4, Bytes<32>>, text: Bytes<512>, text_length: Uint<16>,
+  coin: ShieldedCoinInfo, buyer: JubjubPoint, refund_to: Bytes<32>, deadline: Uint<64>, epoch: Uint<32>
+): [] {
+  prove_member(epoch);
+  const length = disclose(model_length);
+  assert(length == 16 || length == 24 || length == 36, "no answer circuit takes a model name of this length");
+  const size = disclose(text_length);
+  assert(size <= 512, "the request is longer than 512 bytes");
+  const c = disclose(coin);
+  assert(c.color == token, "the coin is not the payment token");
+  assert(c.value > 0, "a bounty needs a reward");
+  const until = disclose(deadline);
+  assert(kernel.blockTimeLessThan(until), "the deadline has passed");
+  assert(!kernel.blockTimeLessThan((until - bountyTime()) as Uint<64>), "the deadline lies more than 30 days ahead");
+  const terms = Bounty {
+    request_hash: disclose(request_hash), model: disclose(model), model_length: length, keys: disclose(keys),
+    buyer: disclose(buyer), refund_to: disclose(refund_to), deadline: until
+  };
+  const at = bountyId(terms, c.value);
+  assert(!bounties.member(at), "this bounty exists");
+  bounties.insert(at, terms);
+  requests.insert(at, Request { text: disclose(text), length: size });
+  receiveShielded(c);
+  rewards.insertCoin(at, c, right<ZswapCoinPublicKey, ContractAddress>(kernel.self()));
+}
+
+circuit littleEndian16(v: Vector<16, Uint<8>>): Field {
+  return fold((acc: Field, byte: Uint<8>): Field => acc * 256 + (byte as Field), 0 as Field,
+    [v[15], v[14], v[13], v[12], v[11], v[10], v[9], v[8], v[7], v[6], v[5], v[4], v[3], v[2], v[1], v[0]]);
+}
+
+// The 32 bytes of an ed25519 key as two little-endian halves.
+circuit halves(key: Vector<32, Uint<8>>): [Field, Field] {
+  return [littleEndian16(slice<16>(key, 0)), littleEndian16(slice<16>(key, 16))];
+}
+
+// The ed25519 key of a point: y in 255 bits with the lowest bit of x on top, as two halves.
+circuit keyOf(point: Curve25519Point): [Field, Field] {
+  const x = (curve25519PointX(point) as Bytes<32>) as Vector<32, Uint<8>>;
+  const y = (curve25519PointY(point) as Bytes<32>) as Vector<32, Uint<8>>;
+  const split = disclose(lowBit(x[0]));
+  assert((split[0] as Field) + 2 * (split[1] as Field) == (x[0] as Field), "wrong low bit");
+  const half = halves(y);
+  return [half[0], half[1] + (split[0] as Field) * 170141183460469231731687303715884105728];
+}
+
+// Whether key is one of a bounty's keys. A zero entry is an unused place and matches nothing.
+circuit pinned(keys: Vector<4, Bytes<32>>, key: [Field, Field]): Boolean {
+  const zero = 0 as Field;
+  return fold((found: Boolean, entry: Bytes<32>): Boolean => {
+    const half = halves(entry as Vector<32, Uint<8>>);
+    return found || (!(half[0] == zero && half[1] == zero) && half[0] == key[0] && half[1] == key[1]);
+  }, false, keys);
+}
+
+// The ASCII code of a hex digit from its four bits, most significant first.
+circuit hexDigit(bits: Vector<4, Boolean>): Uint<8> {
+  const b2 = bits[1] as Field;
+  const b1 = bits[2] as Field;
+  const value = (bits[0] as Field) * 8 + b2 * 4 + b1 * 2 + (bits[3] as Field);
+  // Ten to fifteen are the letters a to f, 39 codes after the digits.
+  const letter = (bits[0] as Field) * (b2 + b1 - b2 * b1);
+  return (48 + value + 39 * letter) as Uint<8>;
+}
+
+// The two hex digits of each of eight bytes.
+circuit hex8(v: Vector<8, Uint<8>>): Vector<16, Uint<8>> {
+  const d = map((byte: Uint<8>): Vector<2, Uint<8>> => {
+    const bits = disclose(bitsOfByte(byte));
+    const packed = fold((acc: Field, bit: Boolean): Field => acc * 2 + (bit as Field), 0 as Field, bits);
+    assert(packed == (byte as Field), "bits do not match the byte");
+    return [hexDigit(slice<4>(bits, 0)), hexDigit(slice<4>(bits, 4))];
+  }, v);
+  return [d[0][0], d[0][1], d[1][0], d[1][1], d[2][0], d[2][1], d[3][0], d[3][1],
+    d[4][0], d[4][1], d[5][0], d[5][1], d[6][0], d[6][1], d[7][0], d[7][1]];
+}
+
+circuit hex32(hash: Bytes<32>): Vector<64, Uint<8>> {
+  const v = hash as Vector<32, Uint<8>>;
+  return [...hex8(slice<8>(v, 0)), ...hex8(slice<8>(v, 8)), ...hex8(slice<8>(v, 16)), ...hex8(slice<8>(v, 24))];
+}
+
+// What the TEE signs for an answer: the model's name, the hex of the request's SHA-256 hash and
+// the hex of the response's, with a colon between each.
+circuit signedText<#M, #N>(model: Vector<M, Uint<8>>, request: Bytes<32>, response: Bytes<32>): Bytes<N> {
+  return [...model, 58 as Uint<8>, ...hex32(request), 58 as Uint<8>, ...hex32(response)] as Bytes<N>;
+}
+
+// Pays a bounty's reward, before its deadline, for a sealed drop that holds the model's answer:
+// one of the bounty's keys signed its request hash and the drop's content hash. The drop's key
+// goes to the bounty's buyer in the same call. M is the model name's length, N the signed text's.
+circuit settle<#M, #N>(bounty: Bytes<32>, drop: Bytes<32>, signature: Ed25519Signature, point: Curve25519Point): [] {
+  assert(rewards.member(bounty), "the bounty is not open");
+  const wanted = bounties.lookup(bounty);
+  assert(kernel.blockTimeLessThan(wanted.deadline), "the deadline has passed");
+  assert(wanted.model_length == M, "the model's name has another length");
+  assert(seals.member(drop), "no such drop");
+  assert(seals.lookup(drop).done, "the drop is not sealed");
+  const answered = drops.lookup(drop);
+  assert(kernel.blockTimeLessThan((answered.day + dropAnswersDays()) * 86400), "the drop is too old to answer with");
+  assert(pinned(wanted.keys, keyOf(point)), "the bounty does not name this key");
+  const name = slice<M>(wanted.model as Vector<48, Uint<8>>, 0);
+  assert(ed25519Verify<N>(signedText<M, N>(name, wanted.request_hash, answered.content_hash), signature, point), "the TEE did not sign this answer");
+  const key = contentKey();
+  assert(persistentHash<Field>(key) == answered.key_hash, "not the key behind the hash");
+  answers.insert(bounty, Answer { drop: drop, handover: handOver(wanted.buyer, key) });
+  const coin = rewards.lookup(bounty);
+  sendShielded(coin, left<ZswapCoinPublicKey, ContractAddress>(ZswapCoinPublicKey { bytes: answered.payout }), coin.value);
+  rewards.remove(bounty);
+}
+
+// Answers a bounty for a model whose name has 16 bytes. Only the holder of the drop's key can send it.
+export circuit answer_16(bounty: Bytes<32>, drop: Bytes<32>, signature: Ed25519Signature, point: Curve25519Point): [] {
+  settle<16, 146>(disclose(bounty), disclose(drop), disclose(signature), disclose(point));
+}
+
+// The same for a model name of 24 bytes.
+export circuit answer_24(bounty: Bytes<32>, drop: Bytes<32>, signature: Ed25519Signature, point: Curve25519Point): [] {
+  settle<24, 154>(disclose(bounty), disclose(drop), disclose(signature), disclose(point));
+}
+
+// The same for a model name of 36 bytes.
+export circuit answer_36(bounty: Bytes<32>, drop: Bytes<32>, signature: Ed25519Signature, point: Curve25519Point): [] {
+  settle<36, 166>(disclose(bounty), disclose(drop), disclose(signature), disclose(point));
+}
+
+// The coin public key of a wallet from its coin secret key, as the ledger derives it.
+circuit coinKeyOf(secret: Bytes<32>): Bytes<32> {
+  const tag = pad(21, "midnight:zswap-pk[v1]") as Vector<21, Uint<8>>;
+  return persistentHash<Bytes<53>>([...tag, ...(secret as Vector<32, Uint<8>>)] as Bytes<53>);
+}
+
+// Pays the reward of an unanswered bounty back to its refund key once the deadline has passed.
+// Only the holder of that key can send it, so the coin's note is written by the wallet that must
+// find it. 30 days later anyone can, so that the bounty's records can be removed.
+export circuit refund_bounty(bounty: Bytes<32>): [] {
+  const at = disclose(bounty);
+  assert(rewards.member(at), "the bounty is not open");
+  const wanted = bounties.lookup(at);
+  assert(kernel.blockTimeGreaterThan(wanted.deadline), "the deadline has not passed");
+  const holder = disclose(coinKeyOf(coinSecretKey()) == wanted.refund_to);
+  assert(holder || kernel.blockTimeGreaterThan((wanted.deadline + bountyTime()) as Uint<64>), "only the holder of the refund key refunds in the first 30 days");
+  const coin = rewards.lookup(at);
+  sendShielded(coin, left<ZswapCoinPublicKey, ContractAddress>(ZswapCoinPublicKey { bytes: wanted.refund_to }), coin.value);
+  rewards.remove(at);
+}
+
+// Removes the records of a bounty whose reward is paid out, 30 days after its deadline.
+export circuit forget_bounty(bounty: Bytes<32>): [] {
+  const at = disclose(bounty);
+  assert(bounties.member(at), "no such bounty");
+  assert(!rewards.member(at), "the reward is still on the board");
+  assert(kernel.blockTimeGreaterThan((bounties.lookup(at).deadline + bountyTime()) as Uint<64>), "the bounty is still kept");
+  bounties.remove(at);
+  requests.remove(at);
+  if (answers.member(at)) {
+    answers.remove(at);
+  }
+}

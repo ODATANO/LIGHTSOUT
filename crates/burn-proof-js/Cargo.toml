@@ -1,0 +1,24 @@
+[package]
+name = "burn-proof-js"
+description = "The proof parts the kit builds for the NEAR bridge: the extrinsic proof and the bridge logs, for Node"
+version = "0.1.0"
+edition = "2024"
+license = "Apache-2.0"
+repository = "https://github.com/ODATANO/LIGHTSOUT"
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+# The version must equal the wasm-bindgen CLI that build.sh runs.
+wasm-bindgen = "=0.2.130"
+js-sys = "0.3"
+substrate-read-proof = { path = "../substrate-read-proof", default-features = false }
+midnight-tx = { path = "../midnight-tx" }
+
+[profile.release]
+codegen-units = 1
+opt-level = "z"
+lto = true
+panic = "abort"

@@ -1,0 +1,15 @@
+.git
+**/node_modules
+**/.env
+**/.env.*
+!.env.example
+local_docs
+assets
+**/scratch
+**/.wallet
+**/out
+**/target
+contracts/*/managed/**/keys/*.prover
+contracts/midnight-bridge/params
+deploy/keys
+deploy/wallet

@@ -1,0 +1,1296 @@
+{
+  "compiler-version": "0.36.0",
+  "compiler-commit": "b5d9e4dfc532fe47011c4f6296e254f4853eb469",
+  "language-version": "0.28.0",
+  "runtime-version": "0.21.0",
+  "circuits": [
+    {
+      "name": "propose",
+      "pure": false,
+      "proof": true,
+      "arguments": [
+        {
+          "name": "lite",
+          "type": {
+            "type-name": "Bytes",
+            "length": 208
+          }
+        },
+        {
+          "name": "innerRest",
+          "type": {
+            "type-name": "Bytes",
+            "length": 32
+          }
+        },
+        {
+          "name": "previous",
+          "type": {
+            "type-name": "Bytes",
+            "length": 32
+          }
+        },
+        {
+          "name": "nextInner",
+          "type": {
+            "type-name": "Bytes",
+            "length": 32
+          }
+        },
+        {
+          "name": "target",
+          "type": {
+            "type-name": "Bytes",
+            "length": 8
+          }
+        },
+        {
+          "name": "built",
+          "type": {
+            "type-name": "Uint",
+            "maxval": 18446744073709551615
+          }
+        }
+      ],
+      "result-type": {
+        "type-name": "Tuple",
+        "types": [
+        ]
+      }
+    },
+    {
+      "name": "approve",
+      "pure": false,
+      "proof": true,
+      "arguments": [
+        {
+          "name": "hash",
+          "type": {
+            "type-name": "Bytes",
+            "length": 32
+          }
+        },
+        {
+          "name": "index",
+          "type": {
+            "type-name": "Uint",
+            "maxval": 65535
+          }
+        },
+        {
+          "name": "signature",
+          "type": {
+            "type-name": "Struct",
+            "name": "Ed25519Signature",
+            "elements": [
+              {
+                "name": "r",
+                "type": {
+                  "type-name": "Curve25519Point"
+                }
+              },
+              {
+                "name": "s",
+                "type": {
+                  "type-name": "Curve25519Scalar"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "point",
+          "type": {
+            "type-name": "Curve25519Point"
+          }
+        }
+      ],
+      "result-type": {
+        "type-name": "Tuple",
+        "types": [
+        ]
+      }
+    },
+    {
+      "name": "accept",
+      "pure": false,
+      "proof": true,
+      "arguments": [
+        {
+          "name": "hash",
+          "type": {
+            "type-name": "Bytes",
+            "length": 32
+          }
+        }
+      ],
+      "result-type": {
+        "type-name": "Tuple",
+        "types": [
+        ]
+      }
+    },
+    {
+      "name": "begin",
+      "pure": false,
+      "proof": true,
+      "arguments": [
+        {
+          "name": "length",
+          "type": {
+            "type-name": "Uint",
+            "maxval": 4294967295
+          }
+        }
+      ],
+      "result-type": {
+        "type-name": "Tuple",
+        "types": [
+        ]
+      }
+    },
+    {
+      "name": "absorb",
+      "pure": false,
+      "proof": true,
+      "arguments": [
+        {
+          "name": "block",
+          "type": {
+            "type-name": "Bytes",
+            "length": 64
+          }
+        }
+      ],
+      "result-type": {
+        "type-name": "Tuple",
+        "types": [
+        ]
+      }
+    },
+    {
+      "name": "know",
+      "pure": false,
+      "proof": true,
+      "arguments": [
+        {
+          "name": "lite",
+          "type": {
+            "type-name": "Bytes",
+            "length": 208
+          }
+        },
+        {
+          "name": "innerRest",
+          "type": {
+            "type-name": "Bytes",
+            "length": 32
+          }
+        },
+        {
+          "name": "previous",
+          "type": {
+            "type-name": "Bytes",
+            "length": 32
+          }
+        },
+        {
+          "name": "path",
+          "type": {
+            "type-name": "Vector",
+            "length": 34,
+            "type": {
+              "type-name": "Struct",
+              "name": "Level",
+              "elements": [
+                {
+                  "name": "hash",
+                  "type": {
+                    "type-name": "Bytes",
+                    "length": 32
+                  }
+                },
+                {
+                  "name": "side",
+                  "type": {
+                    "type-name": "Uint",
+                    "maxval": 255
+                  }
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "result-type": {
+        "type-name": "Tuple",
+        "types": [
+        ]
+      }
+    },
+    {
+      "name": "forget",
+      "pure": false,
+      "proof": true,
+      "arguments": [
+        {
+          "name": "what",
+          "type": {
+            "type-name": "Enum",
+            "name": "Stale",
+            "elements": [
+              "header",
+              "read",
+              "block"
+            ]
+          }
+        },
+        {
+          "name": "key",
+          "type": {
+            "type-name": "Bytes",
+            "length": 32
+          }
+        },
+        {
+          "name": "read",
+          "type": {
+            "type-name": "Field"
+          }
+        }
+      ],
+      "result-type": {
+        "type-name": "Tuple",
+        "types": [
+        ]
+      }
+    },
+    {
+      "name": "prove_lock",
+      "pure": false,
+      "proof": true,
+      "arguments": [
+        {
+          "name": "block",
+          "type": {
+            "type-name": "Bytes",
+            "length": 32
+          }
+        },
+        {
+          "name": "receipt",
+          "type": {
+            "type-name": "Bytes",
+            "length": 32
+          }
+        },
+        {
+          "name": "count",
+          "type": {
+            "type-name": "Uint",
+            "maxval": 255
+          }
+        },
+        {
+          "name": "receipts",
+          "type": {
+            "type-name": "Vector",
+            "length": 2,
+            "type": {
+              "type-name": "Bytes",
+              "length": 32
+            }
+          }
+        },
+        {
+          "name": "gas",
+          "type": {
+            "type-name": "Bytes",
+            "length": 8
+          }
+        },
+        {
+          "name": "tokens",
+          "type": {
+            "type-name": "Bytes",
+            "length": 16
+          }
+        },
+        {
+          "name": "lock",
+          "type": {
+            "type-name": "Bytes",
+            "length": 8
+          }
+        },
+        {
+          "name": "amount",
+          "type": {
+            "type-name": "Bytes",
+            "length": 8
+          }
+        },
+        {
+          "name": "recipient",
+          "type": {
+            "type-name": "Bytes",
+            "length": 32
+          }
+        },
+        {
+          "name": "eventHash",
+          "type": {
+            "type-name": "Bytes",
+            "length": 32
+          }
+        },
+        {
+          "name": "outcomePath",
+          "type": {
+            "type-name": "Vector",
+            "length": 16,
+            "type": {
+              "type-name": "Struct",
+              "name": "Level",
+              "elements": [
+                {
+                  "name": "hash",
+                  "type": {
+                    "type-name": "Bytes",
+                    "length": 32
+                  }
+                },
+                {
+                  "name": "side",
+                  "type": {
+                    "type-name": "Uint",
+                    "maxval": 255
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "shardPath",
+          "type": {
+            "type-name": "Vector",
+            "length": 10,
+            "type": {
+              "type-name": "Struct",
+              "name": "Level",
+              "elements": [
+                {
+                  "name": "hash",
+                  "type": {
+                    "type-name": "Bytes",
+                    "length": 32
+                  }
+                },
+                {
+                  "name": "side",
+                  "type": {
+                    "type-name": "Uint",
+                    "maxval": 255
+                  }
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "result-type": {
+        "type-name": "Tuple",
+        "types": [
+        ]
+      }
+    },
+    {
+      "name": "prove_register",
+      "pure": false,
+      "proof": true,
+      "arguments": [
+        {
+          "name": "block",
+          "type": {
+            "type-name": "Bytes",
+            "length": 32
+          }
+        },
+        {
+          "name": "receipt",
+          "type": {
+            "type-name": "Bytes",
+            "length": 32
+          }
+        },
+        {
+          "name": "count",
+          "type": {
+            "type-name": "Uint",
+            "maxval": 255
+          }
+        },
+        {
+          "name": "receipts",
+          "type": {
+            "type-name": "Vector",
+            "length": 2,
+            "type": {
+              "type-name": "Bytes",
+              "length": 32
+            }
+          }
+        },
+        {
+          "name": "gas",
+          "type": {
+            "type-name": "Bytes",
+            "length": 8
+          }
+        },
+        {
+          "name": "tokens",
+          "type": {
+            "type-name": "Bytes",
+            "length": 16
+          }
+        },
+        {
+          "name": "index",
+          "type": {
+            "type-name": "Bytes",
+            "length": 8
+          }
+        },
+        {
+          "name": "commitment",
+          "type": {
+            "type-name": "Bytes",
+            "length": 32
+          }
+        },
+        {
+          "name": "eventHash",
+          "type": {
+            "type-name": "Bytes",
+            "length": 32
+          }
+        },
+        {
+          "name": "outcomePath",
+          "type": {
+            "type-name": "Vector",
+            "length": 16,
+            "type": {
+              "type-name": "Struct",
+              "name": "Level",
+              "elements": [
+                {
+                  "name": "hash",
+                  "type": {
+                    "type-name": "Bytes",
+                    "length": 32
+                  }
+                },
+                {
+                  "name": "side",
+                  "type": {
+                    "type-name": "Uint",
+                    "maxval": 255
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "shardPath",
+          "type": {
+            "type-name": "Vector",
+            "length": 10,
+            "type": {
+              "type-name": "Struct",
+              "name": "Level",
+              "elements": [
+                {
+                  "name": "hash",
+                  "type": {
+                    "type-name": "Bytes",
+                    "length": 32
+                  }
+                },
+                {
+                  "name": "side",
+                  "type": {
+                    "type-name": "Uint",
+                    "maxval": 255
+                  }
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "result-type": {
+        "type-name": "Tuple",
+        "types": [
+        ]
+      }
+    },
+    {
+      "name": "known_root",
+      "pure": false,
+      "proof": true,
+      "arguments": [
+        {
+          "name": "root",
+          "type": {
+            "type-name": "Struct",
+            "name": "MerkleTreeDigest",
+            "elements": [
+              {
+                "name": "field",
+                "type": {
+                  "type-name": "Field"
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "result-type": {
+        "type-name": "Tuple",
+        "types": [
+        ]
+      }
+    },
+    {
+      "name": "wrappedDomain",
+      "pure": true,
+      "proof": false,
+      "arguments": [
+      ],
+      "result-type": {
+        "type-name": "Bytes",
+        "length": 32
+      }
+    },
+    {
+      "name": "mint",
+      "pure": false,
+      "proof": true,
+      "arguments": [
+        {
+          "name": "lock_id",
+          "type": {
+            "type-name": "Uint",
+            "maxval": 18446744073709551615
+          }
+        }
+      ],
+      "result-type": {
+        "type-name": "Tuple",
+        "types": [
+        ]
+      }
+    },
+    {
+      "name": "burnId",
+      "pure": true,
+      "proof": false,
+      "arguments": [
+        {
+          "name": "coin",
+          "type": {
+            "type-name": "Struct",
+            "name": "ShieldedCoinInfo",
+            "elements": [
+              {
+                "name": "nonce",
+                "type": {
+                  "type-name": "Bytes",
+                  "length": 32
+                }
+              },
+              {
+                "name": "color",
+                "type": {
+                  "type-name": "Bytes",
+                  "length": 32
+                }
+              },
+              {
+                "name": "value",
+                "type": {
+                  "type-name": "Uint",
+                  "maxval": 340282366920938463463374607431768211455
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "result-type": {
+        "type-name": "Bytes",
+        "length": 32
+      }
+    },
+    {
+      "name": "burn",
+      "pure": false,
+      "proof": true,
+      "arguments": [
+        {
+          "name": "coin",
+          "type": {
+            "type-name": "Struct",
+            "name": "ShieldedCoinInfo",
+            "elements": [
+              {
+                "name": "nonce",
+                "type": {
+                  "type-name": "Bytes",
+                  "length": 32
+                }
+              },
+              {
+                "name": "color",
+                "type": {
+                  "type-name": "Bytes",
+                  "length": 32
+                }
+              },
+              {
+                "name": "value",
+                "type": {
+                  "type-name": "Uint",
+                  "maxval": 340282366920938463463374607431768211455
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "near_recipient",
+          "type": {
+            "type-name": "Bytes",
+            "length": 64
+          }
+        }
+      ],
+      "result-type": {
+        "type-name": "Tuple",
+        "types": [
+        ]
+      }
+    }
+  ],
+  "witnesses": [
+    {
+      "name": "bitsOf",
+      "arguments": [
+        {
+          "name": "x",
+          "type": {
+            "type-name": "Field"
+          }
+        }
+      ],
+      "result type": {
+        "type-name": "Vector",
+        "length": 35,
+        "type": {
+          "type-name": "Boolean"
+        }
+      }
+    },
+    {
+      "name": "bitsOfByte",
+      "arguments": [
+        {
+          "name": "x",
+          "type": {
+            "type-name": "Uint",
+            "maxval": 255
+          }
+        }
+      ],
+      "result type": {
+        "type-name": "Vector",
+        "length": 8,
+        "type": {
+          "type-name": "Boolean"
+        }
+      }
+    },
+    {
+      "name": "lowBit",
+      "arguments": [
+        {
+          "name": "x",
+          "type": {
+            "type-name": "Uint",
+            "maxval": 255
+          }
+        }
+      ],
+      "result type": {
+        "type-name": "Tuple",
+        "types": [
+          {
+            "type-name": "Boolean"
+          },
+          {
+            "type-name": "Uint",
+            "maxval": 127
+          }
+        ]
+      }
+    },
+    {
+      "name": "coinSecretKey",
+      "arguments": [
+      ],
+      "result type": {
+        "type-name": "Bytes",
+        "length": 32
+      }
+    },
+    {
+      "name": "readSecret",
+      "arguments": [
+      ],
+      "result type": {
+        "type-name": "Bytes",
+        "length": 32
+      }
+    }
+  ],
+  "contracts": [
+  ],
+  "ledger": [
+    {
+      "name": "minted_locks",
+      "index": 0,
+      "exported": true,
+      "storage": "Set",
+      "type": {
+        "type-name": "Uint",
+        "maxval": 18446744073709551615
+      }
+    },
+    {
+      "name": "burns",
+      "index": 1,
+      "exported": true,
+      "storage": "Map",
+      "key": {
+        "type-name": "Uint",
+        "maxval": 255
+      },
+      "value": {
+        "type-name": "Struct",
+        "name": "Burn",
+        "elements": [
+          {
+            "name": "id",
+            "type": {
+              "type-name": "Bytes",
+              "length": 32
+            }
+          },
+          {
+            "name": "near_recipient",
+            "type": {
+              "type-name": "Bytes",
+              "length": 64
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "type-name": "Uint",
+              "maxval": 340282366920938463463374607431768211455
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "bridge",
+      "index": 2,
+      "exported": true,
+      "storage": "Cell",
+      "type": {
+        "type-name": "Bytes",
+        "length": 26
+      }
+    },
+    {
+      "name": "tip",
+      "index": 3,
+      "exported": true,
+      "storage": "Cell",
+      "type": {
+        "type-name": "Struct",
+        "name": "Tip",
+        "elements": [
+          {
+            "name": "head",
+            "type": {
+              "type-name": "Struct",
+              "name": "Head",
+              "elements": [
+                {
+                  "name": "height",
+                  "type": {
+                    "type-name": "Uint",
+                    "maxval": 18446744073709551615
+                  }
+                },
+                {
+                  "name": "epoch",
+                  "type": {
+                    "type-name": "Bytes",
+                    "length": 32
+                  }
+                },
+                {
+                  "name": "nextEpoch",
+                  "type": {
+                    "type-name": "Bytes",
+                    "length": 32
+                  }
+                },
+                {
+                  "name": "nextProducers",
+                  "type": {
+                    "type-name": "Bytes",
+                    "length": 32
+                  }
+                },
+                {
+                  "name": "blockRoot",
+                  "type": {
+                    "type-name": "Bytes",
+                    "length": 32
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "era",
+            "type": {
+              "type-name": "Field"
+            }
+          },
+          {
+            "name": "total",
+            "type": {
+              "type-name": "Field"
+            }
+          },
+          {
+            "name": "nextTotal",
+            "type": {
+              "type-name": "Field"
+            }
+          },
+          {
+            "name": "list",
+            "type": {
+              "type-name": "Field"
+            }
+          },
+          {
+            "name": "nextList",
+            "type": {
+              "type-name": "Field"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "producers",
+      "index": 4,
+      "exported": true,
+      "storage": "Map",
+      "key": {
+        "type-name": "Field"
+      },
+      "value": {
+        "type-name": "Map",
+        "key": {
+          "type-name": "Uint",
+          "maxval": 65535
+        },
+        "value": {
+          "type-name": "Struct",
+          "name": "Producer",
+          "elements": [
+            {
+              "name": "keyLow",
+              "type": {
+                "type-name": "Field"
+              }
+            },
+            {
+              "name": "keyHigh",
+              "type": {
+                "type-name": "Field"
+              }
+            },
+            {
+              "name": "stake",
+              "type": {
+                "type-name": "Field"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "candidates",
+      "index": 5,
+      "exported": true,
+      "storage": "Map",
+      "key": {
+        "type-name": "Bytes",
+        "length": 32
+      },
+      "value": {
+        "type-name": "Struct",
+        "name": "Candidate",
+        "elements": [
+          {
+            "name": "head",
+            "type": {
+              "type-name": "Struct",
+              "name": "Head",
+              "elements": [
+                {
+                  "name": "height",
+                  "type": {
+                    "type-name": "Uint",
+                    "maxval": 18446744073709551615
+                  }
+                },
+                {
+                  "name": "epoch",
+                  "type": {
+                    "type-name": "Bytes",
+                    "length": 32
+                  }
+                },
+                {
+                  "name": "nextEpoch",
+                  "type": {
+                    "type-name": "Bytes",
+                    "length": 32
+                  }
+                },
+                {
+                  "name": "nextProducers",
+                  "type": {
+                    "type-name": "Bytes",
+                    "length": 32
+                  }
+                },
+                {
+                  "name": "blockRoot",
+                  "type": {
+                    "type-name": "Bytes",
+                    "length": 32
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "message",
+            "type": {
+              "type-name": "Bytes",
+              "length": 41
+            }
+          },
+          {
+            "name": "era",
+            "type": {
+              "type-name": "Field"
+            }
+          },
+          {
+            "name": "stake",
+            "type": {
+              "type-name": "Field"
+            }
+          },
+          {
+            "name": "built",
+            "type": {
+              "type-name": "Uint",
+              "maxval": 18446744073709551615
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "signed",
+      "index": 6,
+      "exported": true,
+      "storage": "Map",
+      "key": {
+        "type-name": "Bytes",
+        "length": 32
+      },
+      "value": {
+        "type-name": "Set",
+        "type": {
+          "type-name": "Uint",
+          "maxval": 65535
+        }
+      }
+    },
+    {
+      "name": "readers",
+      "index": 7,
+      "exported": true,
+      "storage": "Map",
+      "key": {
+        "type-name": "Field"
+      },
+      "value": {
+        "type-name": "Struct",
+        "name": "Reader",
+        "elements": [
+          {
+            "name": "sha",
+            "type": {
+              "type-name": "Vector",
+              "length": 8,
+              "type": {
+                "type-name": "Field"
+              }
+            }
+          },
+          {
+            "name": "parse",
+            "type": {
+              "type-name": "Struct",
+              "name": "Parse",
+              "elements": [
+                {
+                  "name": "phase",
+                  "type": {
+                    "type-name": "Field"
+                  }
+                },
+                {
+                  "name": "rem",
+                  "type": {
+                    "type-name": "Field"
+                  }
+                },
+                {
+                  "name": "scale",
+                  "type": {
+                    "type-name": "Field"
+                  }
+                },
+                {
+                  "name": "count",
+                  "type": {
+                    "type-name": "Field"
+                  }
+                },
+                {
+                  "name": "len",
+                  "type": {
+                    "type-name": "Field"
+                  }
+                },
+                {
+                  "name": "keyLow",
+                  "type": {
+                    "type-name": "Field"
+                  }
+                },
+                {
+                  "name": "keyHigh",
+                  "type": {
+                    "type-name": "Field"
+                  }
+                },
+                {
+                  "name": "stake",
+                  "type": {
+                    "type-name": "Field"
+                  }
+                },
+                {
+                  "name": "index",
+                  "type": {
+                    "type-name": "Field"
+                  }
+                },
+                {
+                  "name": "total",
+                  "type": {
+                    "type-name": "Field"
+                  }
+                },
+                {
+                  "name": "left",
+                  "type": {
+                    "type-name": "Field"
+                  }
+                },
+                {
+                  "name": "ended",
+                  "type": {
+                    "type-name": "Field"
+                  }
+                },
+                {
+                  "name": "emitted",
+                  "type": {
+                    "type-name": "Field"
+                  }
+                },
+                {
+                  "name": "outLow",
+                  "type": {
+                    "type-name": "Field"
+                  }
+                },
+                {
+                  "name": "outHigh",
+                  "type": {
+                    "type-name": "Field"
+                  }
+                },
+                {
+                  "name": "outStake",
+                  "type": {
+                    "type-name": "Field"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "bitLength",
+            "type": {
+              "type-name": "Field"
+            }
+          },
+          {
+            "name": "expected",
+            "type": {
+              "type-name": "Bytes",
+              "length": 32
+            }
+          },
+          {
+            "name": "filling",
+            "type": {
+              "type-name": "Field"
+            }
+          },
+          {
+            "name": "active",
+            "type": {
+              "type-name": "Boolean"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "blocks",
+      "index": 8,
+      "exported": true,
+      "storage": "Map",
+      "key": {
+        "type-name": "Bytes",
+        "length": 32
+      },
+      "value": {
+        "type-name": "Struct",
+        "name": "Known",
+        "elements": [
+          {
+            "name": "outcomes",
+            "type": {
+              "type-name": "Bytes",
+              "length": 32
+            }
+          },
+          {
+            "name": "at",
+            "type": {
+              "type-name": "Uint",
+              "maxval": 18446744073709551615
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "locks",
+      "index": 9,
+      "exported": true,
+      "storage": "Map",
+      "key": {
+        "type-name": "Uint",
+        "maxval": 18446744073709551615
+      },
+      "value": {
+        "type-name": "Struct",
+        "name": "Lock",
+        "elements": [
+          {
+            "name": "amount",
+            "type": {
+              "type-name": "Uint",
+              "maxval": 18446744073709551615
+            }
+          },
+          {
+            "name": "recipient",
+            "type": {
+              "type-name": "Bytes",
+              "length": 32
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "members",
+      "index": 10,
+      "exported": true,
+      "storage": "HistoricMerkleTree",
+      "depth": 16,
+      "type": {
+        "type-name": "Bytes",
+        "length": 32
+      }
+    },
+    {
+      "name": "joined",
+      "index": 11,
+      "exported": true,
+      "storage": "Set",
+      "type": {
+        "type-name": "Uint",
+        "maxval": 18446744073709551615
+      }
+    }
+  ]
+}

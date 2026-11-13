@@ -1,0 +1,31 @@
+[package]
+name = "mithril-light"
+description = "Verifies Mithril certificates and the Cardano transactions they certify, on BLS12-381 host functions"
+version = "0.1.0"
+edition = "2024"
+license = "Apache-2.0"
+repository = "https://github.com/ODATANO/LIGHTSOUT"
+
+[dependencies]
+blake2 = { version = "0.10", default-features = false }
+sha2 = { version = "0.10", default-features = false }
+hex = { version = "0.4", features = ["serde"] }
+num-bigint = "0.4"
+num-rational = { version = "0.4", features = ["num-bigint"] }
+num-traits = "0.2"
+ckb-merkle-mountain-range = { version = "0.6", default-features = false }
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1", optional = true }
+schemars = { version = "0.8", optional = true }
+
+[features]
+# Readers for the aggregator's JSON, for relayers and tests.
+aggregator = ["dep:serde_json"]
+# JSON schemas of the public types, for a contract ABI.
+abi = ["dep:schemars"]
+
+[dev-dependencies]
+mithril-light = { path = ".", features = ["aggregator"] }
+blst = "0.3.17"
+ed25519-dalek = "2.2"
+serde_json = "1"

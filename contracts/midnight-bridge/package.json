@@ -1,0 +1,32 @@
+{
+  "name": "lightsout-midnight-bridge",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Wrapped NEAR on Midnight, minted for any lock that a NEAR light client inside the contract proved",
+  "license": "Apache-2.0",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./managed/midnight-bridge/contract/index.d.ts",
+      "default": "./managed/midnight-bridge/contract/index.js"
+    }
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "compile": "compact compile +0.36.0 src/midnight-bridge.compact managed/midnight-bridge",
+    "test": "tsx --test --test-force-exit test/*.test.mjs",
+    "prove": "tsx scripts/prove.mjs"
+  },
+  "dependencies": {
+    "@midnight-ntwrk/compact-runtime": "0.21.0",
+    "@midnight-ntwrk/zkir-v3": "3.2.1",
+    "@midnightntwrk/ledger-v9": "1.0.0",
+    "@noble/curves": "^2.4.0",
+    "@scure/base": "2.4.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.23.15"
+  }
+}

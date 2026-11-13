@@ -1,0 +1,603 @@
+pragma language_version >= 0.26;
+import CompactStandardLibrary;
+import "Sha256";
+
+// Shielded wrapped NEAR, minted only for a lock that NEAR finalized. The contract is a NEAR light
+// client: it follows headers by the block producers' signatures and proves a lock's outcome.
+// Every call is open to anyone but two: mint is the recipient's, absorb the read's own reader's.
+
+// An ed25519 key as two little-endian halves, and the stake behind it.
+struct Producer { keyLow: Field; keyHigh: Field; stake: Field; }
+
+// The parts of a header that later steps need.
+struct Head { height: Uint<64>; epoch: Bytes<32>; nextEpoch: Bytes<32>; nextProducers: Bytes<32>; blockRoot: Bytes<32>; }
+
+// The head with the number of its producer set and the total stake of that set and of the next.
+// The next epoch's set has era + 1; its total is 0 until its list is read. list and nextList
+// name the reads that brought the two sets in.
+struct Tip { head: Head; era: Field; total: Field; nextTotal: Field; list: Field; nextList: Field; }
+
+// A proposed header: the message its producers sign, which producer set signs, the stake so
+// far, and the second NEAR built it in.
+struct Candidate { head: Head; message: Bytes<41>; era: Field; stake: Field; built: Uint<64>; }
+
+// A lock that NEAR finalized: micro-NEAR and the recipient's coin public key.
+struct Lock { amount: Uint<64>; recipient: Bytes<32>; }
+
+// Where the parser stands in the borsh list. Numbers are little-endian, built up with scale.
+// ended and emitted are flags, 0 or 1. The out fields hold the last finished entry.
+struct Parse {
+  phase: Field; rem: Field; scale: Field; count: Field; len: Field;
+  keyLow: Field; keyHigh: Field; stake: Field; index: Field; total: Field;
+  left: Field; ended: Field; emitted: Field;
+  outLow: Field; outHigh: Field; outStake: Field;
+}
+
+// A burn: the hash of the burned coin, which is its id, the NEAR account to pay, the amount.
+export struct Burn {
+  id: Bytes<32>;
+  near_recipient: Bytes<64>;
+  value: Uint<128>;
+}
+
+// The ids of the locks that were minted. A lock is proven and minted once.
+export ledger minted_locks: Set<Uint<64>>;
+// The newest burns, for whoever pays them out, by the first byte of their id. A later burn with
+// the same byte takes the place; NEAR reads a burn from its transaction, not from here.
+export ledger burns: Map<Uint<8>, Burn>;
+// The NEAR bridge account, 26 characters.
+export sealed ledger bridge: Bytes<26>;
+
+// A list being read: SHA-256 state, parser, bit length, the hash it must reach, its era.
+struct Reader { sha: Vector<8, Field>; parse: Parse; bitLength: Field; expected: Bytes<32>; filling: Field; active: Boolean; }
+
+export ledger tip: Tip;
+// Producers by list read, then by their place in the list. Only the two reads the tip names count.
+export ledger producers: Map<Field, Map<Uint<16>, Producer>>;
+// Proposed headers by the hash their producers sign.
+export ledger candidates: Map<Bytes<32>, Candidate>;
+// Per proposed header, the places of the producers whose signature counted.
+export ledger signed: Map<Bytes<32>, Set<Uint<16>>>;
+// List reads by the hash of their reader's secret.
+export ledger readers: Map<Field, Reader>;
+
+// A block under a head: its outcome root, and the head's height when it was recorded.
+struct Known { outcomes: Bytes<32>; at: Uint<64>; }
+
+// Blocks under a head by hash.
+export ledger blocks: Map<Bytes<32>, Known>;
+// Proven locks that wait for their mint.
+export ledger locks: Map<Uint<64>, Lock>;
+
+// Commitments registered on NEAR, and the registration indexes already taken.
+export ledger members: HistoricMerkleTree<16, Bytes<32>>;
+export ledger joined: Set<Uint<64>>;
+
+// The prover supplies the eight bits of a byte, most significant first.
+witness bitsOfByte(x: Uint<8>): Vector<8, Boolean>;
+
+// The prover supplies a byte's lowest bit and the other seven bits.
+witness lowBit(x: Uint<8>): [Boolean, Uint<7>];
+
+// The prover supplies the coin secret key of its own wallet. It stays inside the proof.
+witness coinSecretKey(): Bytes<32>;
+
+// The prover supplies the secret of the list reads it begins. It stays inside the proof.
+witness readSecret(): Bytes<32>;
+
+// Starts from a header the deployer trusts.
+constructor(height: Uint<64>, epoch: Bytes<32>, nextEpoch: Bytes<32>, nextProducers: Bytes<32>, blockRoot: Bytes<32>, account: Bytes<26>) {
+  bridge = disclose(account);
+  tip = Tip {
+    head: Head { height: disclose(height), epoch: disclose(epoch), nextEpoch: disclose(nextEpoch), nextProducers: disclose(nextProducers), blockRoot: disclose(blockRoot) },
+    era: 0 as Field, total: 0 as Field, nextTotal: 0 as Field, list: 0 as Field, nextList: 0 as Field
+  };
+}
+
+// A header counts while it is at most this many seconds old: 32 hours, less than the time
+// after which NEAR's producers of that epoch have nothing at stake any more.
+circuit maxHeaderAge(): Uint<64> {
+  return 115200;
+}
+
+// A recorded block can be forgotten once the head is this many NEAR blocks past the head it was
+// recorded under: about one epoch, so nobody removes it while its lock is being proven.
+circuit blockKeptFor(): Uint<64> {
+  return 43200;
+}
+
+circuit pair(a: Bytes<32>, b: Bytes<32>): Bytes<32> {
+  return persistentHash<Vector<2, Bytes<32>>>([a, b]);
+}
+
+circuit littleEndian8(v: Vector<8, Uint<8>>): Field {
+  return fold((acc: Field, byte: Uint<8>): Field => acc * 256 + (byte as Field), 0 as Field, [v[7], v[6], v[5], v[4], v[3], v[2], v[1], v[0]]);
+}
+
+circuit bigEndian8(v: Vector<8, Uint<8>>): Field {
+  return fold((acc: Field, byte: Uint<8>): Field => acc * 256 + (byte as Field), 0 as Field, v);
+}
+
+circuit littleEndian16(v: Vector<16, Uint<8>>): Field {
+  return fold((acc: Field, byte: Uint<8>): Field => acc * 256 + (byte as Field), 0 as Field,
+    [v[15], v[14], v[13], v[12], v[11], v[10], v[9], v[8], v[7], v[6], v[5], v[4], v[3], v[2], v[1], v[0]]);
+}
+
+// The ed25519 key of a point: y in 255 bits with the lowest bit of x on top, as two halves.
+circuit keyOf(point: Curve25519Point): [Field, Field] {
+  const x = (curve25519PointX(point) as Bytes<32>) as Vector<32, Uint<8>>;
+  const y = (curve25519PointY(point) as Bytes<32>) as Vector<32, Uint<8>>;
+  const split = disclose(lowBit(x[0]));
+  assert((split[0] as Field) + 2 * (split[1] as Field) == (x[0] as Field), "wrong low bit");
+  return [littleEndian16(slice<16>(y, 0)), littleEndian16(slice<16>(y, 16)) + (split[0] as Field) * 170141183460469231731687303715884105728];
+}
+
+// Proposes a header newer than the head, from the head's epoch or the next one. lite is the
+// 208-byte inner_lite, target the height plus two as eight little-endian bytes, built the second
+// of its timestamp. It is kept under the hash its producers sign, so a wrong nextInner blocks none.
+export circuit propose(lite: Bytes<208>, innerRest: Bytes<32>, previous: Bytes<32>, nextInner: Bytes<32>, target: Bytes<8>, built: Uint<64>): [] {
+  const bytes = disclose(lite) as Vector<208, Uint<8>>;
+  const hash = pair(disclose(nextInner), pair(pair(persistentHash<Bytes<208>>(disclose(lite)), disclose(innerRest)), disclose(previous)));
+  assert(!candidates.member(hash), "this header is already proposed");
+  const height = littleEndian8(slice<8>(bytes, 0));
+  const epoch = slice<32>(bytes, 8) as Bytes<32>;
+  const now = tip;
+  assert(height as Uint<64> > now.head.height, "the header is not newer than the head");
+  const next = epoch == now.head.nextEpoch;
+  assert(epoch == now.head.epoch || next, "the header is from an unknown epoch");
+  const set = now.era + (next as Field);
+  assert((next ? now.nextTotal : now.total) != (0 as Field), "the producers of that epoch are not known yet");
+  const goal = disclose(target) as Vector<8, Uint<8>>;
+  assert(littleEndian8(goal) == height + 2, "the target is not the height plus two");
+  // The header carries its time in nanoseconds.
+  const stamp = littleEndian8(slice<8>(bytes, 136)) as Uint<64>;
+  const second = disclose(built);
+  assert(second * 1000000000 <= stamp && stamp < (second + 1) * 1000000000, "built is not the second of the header's timestamp");
+  const tag: Vector<1, Uint<8>> = [0];
+  candidates.insert(hash, Candidate {
+    head: Head {
+      height: height as Uint<64>, epoch: epoch, nextEpoch: slice<32>(bytes, 40) as Bytes<32>,
+      nextProducers: slice<32>(bytes, 144) as Bytes<32>, blockRoot: slice<32>(bytes, 176) as Bytes<32>
+    },
+    message: [...tag, ...(hash as Vector<32, Uint<8>>), ...goal] as Bytes<41>,
+    era: set,
+    stake: 0 as Field,
+    built: second
+  });
+  signed.insert(hash, default<Set<Uint<16>>>);
+}
+
+// Counts one producer's signature on a proposed header. Each producer counts once. The producer
+// comes from the list read that the tip names for the header's epoch.
+export circuit approve(hash: Bytes<32>, index: Uint<16>, signature: Ed25519Signature, point: Curve25519Point): [] {
+  const block = disclose(hash);
+  assert(candidates.member(block), "this header is not proposed");
+  const candidate = candidates.lookup(block);
+  const now = tip;
+  const moves = candidate.era == now.era + 1;
+  assert(candidate.era == now.era || moves, "the header's epoch has passed");
+  const read = moves ? now.nextList : now.list;
+  const place = disclose(index);
+  assert(producers.member(read), "no producer has that index");
+  assert(producers.lookup(read).member(place), "no producer has that index");
+  const producer = producers.lookup(read).lookup(place);
+  const key = keyOf(disclose(point));
+  assert(key[0] == producer.keyLow && key[1] == producer.keyHigh, "the point is not that producer's key");
+  assert(!signed.lookup(block).member(place), "this producer has already signed");
+  signed.lookup(block).insert(place);
+  assert(ed25519Verify<41>(candidate.message, disclose(signature), disclose(point)), "the approval does not verify");
+  candidates.insert(block, Candidate { head: candidate.head, message: candidate.message, era: candidate.era, stake: candidate.stake + producer.stake, built: candidate.built });
+}
+
+// Makes a proposed header the head once more than two thirds of its epoch's stake signed it,
+// while the header is at most 32 hours old. Past that age its producers may have nothing at stake.
+export circuit accept(hash: Bytes<32>): [] {
+  const block = disclose(hash);
+  assert(candidates.member(block), "this header is not proposed");
+  const candidate = candidates.lookup(block);
+  const now = tip;
+  assert(candidate.head.height > now.head.height, "the header is not newer than the head");
+  const moves = candidate.era == now.era + 1;
+  assert(candidate.era == now.era || moves, "the header's epoch has passed");
+  const total = moves ? now.nextTotal : now.total;
+  assert((candidate.stake * 3) as Uint<132> > (total * 2) as Uint<132>, "not more than two thirds of the stake signed");
+  assert(kernel.blockTimeLessThan((candidate.built + maxHeaderAge() + 1) as Uint<64>), "the header is older than 32 hours");
+  tip = Tip {
+    head: candidate.head, era: candidate.era, total: total, nextTotal: moves ? (0 as Field) : now.nextTotal,
+    list: moves ? now.nextList : now.list, nextList: moves ? (0 as Field) : now.nextList
+  };
+  candidates.remove(block);
+  // NEAR reads this log from the transaction: the accepted height as u64 LE, then zeros.
+  const payload = [
+    ...((candidate.head.height as Field) as Bytes<8>) as Vector<8, Uint<8>>,
+    ...pad(248, "") as Vector<248, Uint<8>>
+  ] as Bytes<256>;
+  emit(Misc { name: pad(32, "lightsout/head"), payload: payload });
+}
+
+// Removes what the bridge keeps of a header that cannot become the head: the proposal, if it
+// is still proposed, and its signature marks. An accepted header leaves only its marks.
+circuit forgetHeader(block: Bytes<32>): [] {
+  const proposed = candidates.member(block);
+  const marked = signed.member(block);
+  assert(proposed || marked, "the bridge keeps nothing of that header");
+  if (proposed) {
+    const candidate = candidates.lookup(block);
+    const now = tip;
+    const passed = !(candidate.era == now.era || candidate.era == now.era + 1);
+    assert(candidate.head.height <= now.head.height || passed, "the header can still become the head");
+    candidates.remove(block);
+  }
+  if (marked) {
+    signed.remove(block);
+  }
+}
+
+// 1 when the phase is the given one, else 0.
+circuit at(phase: Field, which: Uint<8>): Field {
+  return (phase == (which as Field)) as Field;
+}
+
+// One byte of the stream. Phases: 0 count, 1 entry tag, 2 name length, 3 name, 4 key tag,
+// 5 and 6 the key halves, 7 stake. After the list come 0x80 and zeros; skip = 1 changes nothing.
+// Written without branches: the compiler's time doubles with every chained conditional.
+circuit step(p: Parse, byte: Uint<8>, skip: Field): Parse {
+  const b = byte as Field;
+  const zero = 0 as Field;
+  const live = (1 - skip) * (1 - p.ended);
+  const marker = live * at(p.left, 0);
+  const data = live - marker;
+  assert(marker * (b - 128) == zero, "the byte after the list must be 0x80");
+  assert(marker * (p.phase - 1) == zero, "the list ends inside an entry");
+  assert(marker * (p.index - p.count) == zero, "the list has the wrong number of entries");
+  assert((1 - skip) * p.ended * b == zero, "padding must be zero");
+  const tag = at(p.phase, 1);
+  const length = at(p.phase, 2);
+  const keyTag = at(p.phase, 4);
+  const low = at(p.phase, 5);
+  const high = at(p.phase, 6);
+  const stake = at(p.phase, 7);
+  assert(data * (tag + keyTag) * b == zero, "unsupported producer or key type");
+  const last = at(p.rem, 1);
+  const term = b * p.scale;
+  const len = (1 - tag) * (p.len + length * term);
+  const stakeNow = (1 - keyTag) * (p.stake + stake * term);
+  // The byte count of the field that follows the current one.
+  const width = length * len + 4 * tag + 16 * (keyTag + low + high) + (1 - length - tag - keyTag - low - high);
+  const done = data * last * stake;
+  return Parse {
+    phase: p.phase + data * last * (1 - 7 * stake),
+    rem: p.rem + data * (last * (width - p.rem + 1) - 1),
+    scale: p.scale + data * (255 * p.scale + last * (1 - 256 * p.scale)),
+    count: p.count + data * at(p.phase, 0) * term,
+    len: p.len + data * (len - p.len),
+    keyLow: p.keyLow + data * ((1 - keyTag) * (p.keyLow + low * term) - p.keyLow),
+    keyHigh: p.keyHigh + data * ((1 - keyTag) * (p.keyHigh + high * term) - p.keyHigh),
+    stake: p.stake + data * (stakeNow - p.stake),
+    index: p.index + done,
+    total: p.total + done * stakeNow,
+    left: p.left - data,
+    ended: p.ended + marker,
+    emitted: p.emitted + done,
+    outLow: p.outLow + done * (p.keyLow - p.outLow),
+    outHigh: p.outHigh + done * (p.keyHigh - p.outHigh),
+    outStake: p.outStake + done * (stakeNow - p.outStake)
+  };
+}
+
+circuit withoutEmitted(p: Parse): Parse {
+  return Parse {
+    phase: p.phase, rem: p.rem, scale: p.scale, count: p.count, len: p.len,
+    keyLow: p.keyLow, keyHigh: p.keyHigh, stake: p.stake, index: p.index, total: p.total,
+    left: p.left, ended: p.ended, emitted: 0 as Field,
+    outLow: p.outLow, outHigh: p.outHigh, outStake: p.outStake
+  };
+}
+
+// Starts a read of the next epoch's producer list, whose hash the head commits to. The read is
+// kept under the hash of its reader's secret, so nobody else can take its place or continue it.
+export circuit begin(length: Uint<32>): [] {
+  const zero = 0 as Field;
+  const now = tip;
+  const id = disclose(transientHash<Bytes<32>>(readSecret()));
+  assert(now.nextTotal == zero, "the next epoch's producers are already known");
+  assert(!readers.member(id), "this read exists");
+  readers.insert(id, Reader {
+    sha: initialState(),
+    parse: Parse {
+      phase: zero, rem: 4 as Field, scale: 1 as Field, count: zero, len: zero,
+      keyLow: zero, keyHigh: zero, stake: zero, index: zero, total: zero,
+      left: disclose(length) as Field, ended: zero, emitted: zero,
+      outLow: zero, outHigh: zero, outStake: zero
+    },
+    bitLength: (disclose(length) as Field) * 8,
+    expected: now.head.nextProducers,
+    filling: now.era + 1,
+    active: true
+  });
+  producers.insert(id, default<Map<Uint<16>, Producer>>);
+}
+
+// Takes the next 64 bytes of the padded list of the sender's read. An entry has at least 56
+// bytes, so at most one ends in the first eight bytes of a block and at most one in the rest.
+// The read's producers count only once the whole list hashed to the value the head commits to.
+export circuit absorb(block: Bytes<64>): [] {
+  const id = disclose(transientHash<Bytes<32>>(readSecret()));
+  assert(readers.member(id), "no such read");
+  const list = readers.lookup(id);
+  assert(list.active, "this read has ended");
+  const bytes = disclose(block) as Vector<64, Uint<8>>;
+  const zero = 0 as Field;
+  const one = 1 as Field;
+  const front = fold((p: Parse, byte: Uint<8>): Parse => step(p, byte, 0 as Field), withoutEmitted(list.parse), slice<8>(bytes, 0));
+  if (front.emitted == one) {
+    producers.lookup(id).insert((front.index - 1) as Uint<16>, Producer { keyLow: front.outLow, keyHigh: front.outHigh, stake: front.outStake });
+  }
+  const body = fold((p: Parse, byte: Uint<8>): Parse => step(p, byte, 0 as Field), withoutEmitted(front), slice<48>(bytes, 8));
+  // Once the list ended before byte 56, the last eight bytes are the bit length and this block is the last.
+  const closing = body.ended;
+  const back = fold((p: Parse, byte: Uint<8>): Parse => step(p, byte, closing), body, slice<8>(bytes, 56));
+  if (back.emitted == one) {
+    producers.lookup(id).insert((back.index - 1) as Uint<16>, Producer { keyLow: back.outLow, keyHigh: back.outHigh, stake: back.outStake });
+  }
+  const trailer = fold((acc: Field, byte: Uint<8>): Field => acc * 256 + (byte as Field), zero, slice<8>(bytes, 56));
+  assert(closing * (trailer - list.bitLength) == zero, "the length in the padding is wrong");
+  const state = compress(list.sha, [
+    bigEndian(slice<4>(bytes, 0)), bigEndian(slice<4>(bytes, 4)), bigEndian(slice<4>(bytes, 8)), bigEndian(slice<4>(bytes, 12)),
+    bigEndian(slice<4>(bytes, 16)), bigEndian(slice<4>(bytes, 20)), bigEndian(slice<4>(bytes, 24)), bigEndian(slice<4>(bytes, 28)),
+    bigEndian(slice<4>(bytes, 32)), bigEndian(slice<4>(bytes, 36)), bigEndian(slice<4>(bytes, 40)), bigEndian(slice<4>(bytes, 44)),
+    bigEndian(slice<4>(bytes, 48)), bigEndian(slice<4>(bytes, 52)), bigEndian(slice<4>(bytes, 56)), bigEndian(slice<4>(bytes, 60))
+  ]);
+  const want = list.expected as Vector<32, Uint<8>>;
+  const digest: Vector<8, Field> = [
+    bigEndian(slice<4>(want, 0)), bigEndian(slice<4>(want, 4)), bigEndian(slice<4>(want, 8)), bigEndian(slice<4>(want, 12)),
+    bigEndian(slice<4>(want, 16)), bigEndian(slice<4>(want, 20)), bigEndian(slice<4>(want, 24)), bigEndian(slice<4>(want, 28))
+  ];
+  assert(closing * (1 - ((state == digest) as Field)) == zero, "the list does not hash to the expected value");
+  readers.insert(id, Reader {
+    sha: state, parse: back, bitLength: list.bitLength, expected: list.expected, filling: list.filling,
+    active: closing == zero
+  });
+  if (closing == one) {
+    const now = tip;
+    assert(list.filling == now.era + 1, "the list is not the next epoch's");
+    assert(now.nextTotal == zero, "the next epoch's producers are already known");
+    tip = Tip { head: now.head, era: now.era, total: now.total, nextTotal: back.total, list: now.list, nextList: id };
+  }
+}
+
+// Whether a list read is neither the head's nor one that can still become the next epoch's.
+circuit spent(id: Field): Boolean {
+  const now = tip;
+  return readers.lookup(id).filling != now.era + 1 && id != now.list;
+}
+
+// Removes a list read that is of no use any more, with its producers.
+circuit forgetRead(id: Field): [] {
+  assert(readers.member(id), "no such read");
+  assert(spent(id), "the read is still in use");
+  readers.remove(id);
+  producers.remove(id);
+}
+
+// One level of a Merkle path. side: 0 no level, 1 the sibling is on the left, 2 on the right.
+struct Level { hash: Bytes<32>; side: Uint<8>; }
+
+circuit up(node: Bytes<32>, level: Level): Bytes<32> {
+  const left = level.side == 1 ? level.hash : node;
+  const right = level.side == 1 ? node : level.hash;
+  return level.side == 0 ? node : pair(left, right);
+}
+
+// Records a block the head commits to, with its outcome root. lite is the block's inner_lite.
+// The path has room for 2^34 blocks.
+export circuit know(lite: Bytes<208>, innerRest: Bytes<32>, previous: Bytes<32>, path: Vector<34, Level>): [] {
+  const hash = pair(pair(persistentHash<Bytes<208>>(disclose(lite)), disclose(innerRest)), disclose(previous));
+  const root = fold((node: Bytes<32>, level: Level): Bytes<32> => up(node, level), hash, disclose(path));
+  const now = tip;
+  assert(root == now.head.blockRoot, "the block is not under the head");
+  blocks.insert(hash, Known { outcomes: slice<32>(disclose(lite) as Vector<208, Uint<8>>, 104) as Bytes<32>, at: now.head.height });
+}
+
+// Removes a recorded block once the head is about an epoch past the one it was recorded under.
+// Any block can be recorded again under a later head.
+circuit forgetBlock(block: Bytes<32>): [] {
+  assert(blocks.member(block), "the block is not known");
+  assert(tip.head.height >= blocks.lookup(block).at + blockKeptFor(), "the block was recorded too recently");
+  blocks.remove(block);
+}
+
+// What `forget` removes: a header's proposal and marks, a list read, or a recorded block.
+export enum Stale { header, read, block }
+
+// Removes one thing the bridge has no use for any more, so its state stays small.
+// `key` is the hash of a header or a block, `read` the id of a list read.
+export circuit forget(what: Stale, key: Bytes<32>, read: Field): [] {
+  const kind = disclose(what);
+  if (kind == Stale.header) {
+    forgetHeader(disclose(key));
+  } else if (kind == Stale.read) {
+    forgetRead(disclose(read));
+  } else {
+    forgetBlock(disclose(key));
+  }
+}
+
+// The ASCII code of a hex digit from its four bits, most significant first.
+circuit hexDigit(bits: Vector<4, Boolean>): Uint<8> {
+  const b2 = bits[1] as Field;
+  const b1 = bits[2] as Field;
+  const value = (bits[0] as Field) * 8 + b2 * 4 + b1 * 2 + (bits[3] as Field);
+  // Ten to fifteen are the letters a to f, 39 codes after the digits.
+  const letter = (bits[0] as Field) * (b2 + b1 - b2 * b1);
+  return (48 + value + 39 * letter) as Uint<8>;
+}
+
+// The two hex digits of each of eight bytes.
+circuit hex(v: Vector<8, Uint<8>>): Vector<16, Uint<8>> {
+  const d = map((byte: Uint<8>): Vector<2, Uint<8>> => {
+    const bits = disclose(bitsOfByte(byte));
+    const packed = fold((acc: Field, bit: Boolean): Field => acc * 2 + (bit as Field), 0 as Field, bits);
+    assert(packed == (byte as Field), "bits do not match the byte");
+    return [hexDigit(slice<4>(bits, 0)), hexDigit(slice<4>(bits, 4))];
+  }, v);
+  return [d[0][0], d[0][1], d[1][0], d[1][1], d[2][0], d[2][1], d[3][0], d[3][1],
+    d[4][0], d[4][1], d[5][0], d[5][1], d[6][0], d[6][1], d[7][0], d[7][1]];
+}
+
+// What a successful call leaves besides its id and logs, for zero to two new receipts:
+// receipt ids, gas burnt, tokens burnt, the executing account, an empty return value.
+circuit outcomeRest(count: Uint<8>, receipts: Vector<2, Bytes<32>>, gas: Bytes<8>, tokens: Bytes<16>): Bytes<32> {
+  const zero: Vector<3, Uint<8>> = [0, 0, 0];
+  const nameLength: Vector<4, Uint<8>> = [26, 0, 0, 0];
+  const empty: Vector<5, Uint<8>> = [2, 0, 0, 0, 0];
+  const shared = [...(gas as Vector<8, Uint<8>>), ...(tokens as Vector<16, Uint<8>>), ...nameLength, ...(bridge as Vector<26, Uint<8>>), ...empty];
+  const first = receipts[0] as Vector<32, Uint<8>>;
+  const second = receipts[1] as Vector<32, Uint<8>>;
+  const none = persistentHash<Bytes<63>>([count, ...zero, ...shared] as Bytes<63>);
+  const single = persistentHash<Bytes<95>>([count, ...zero, ...first, ...shared] as Bytes<95>);
+  const double = persistentHash<Bytes<127>>([count, ...zero, ...first, ...second, ...shared] as Bytes<127>);
+  assert(count == 0 || count == 1 || count == 2, "more than two new receipts");
+  return count == 0 ? none : (count == 1 ? single : double);
+}
+
+// Records a lock from the outcome of the bridge's lock call in a known block. The call logs
+// "lightsout:lock:" with the lock id, the amount and the recipient key in hex, then its event.
+// The paths have room for 2^16 outcomes in a chunk and 2^10 shards.
+export circuit prove_lock(
+  block: Bytes<32>, receipt: Bytes<32>, count: Uint<8>, receipts: Vector<2, Bytes<32>>, gas: Bytes<8>, tokens: Bytes<16>,
+  lock: Bytes<8>, amount: Bytes<8>, recipient: Bytes<32>, eventHash: Bytes<32>,
+  outcomePath: Vector<16, Level>, shardPath: Vector<10, Level>
+): [] {
+  const where = disclose(block);
+  assert(blocks.member(where), "the block is not known");
+  const lockBytes = disclose(lock) as Vector<8, Uint<8>>;
+  const amountBytes = disclose(amount) as Vector<8, Uint<8>>;
+  const key = disclose(recipient) as Vector<32, Uint<8>>;
+  const text = [...(pad(15, "lightsout:lock:") as Vector<15, Uint<8>>), ...hex(lockBytes), ...hex(amountBytes),
+    ...hex(slice<8>(key, 0)), ...hex(slice<8>(key, 8)), ...hex(slice<8>(key, 16)), ...hex(slice<8>(key, 24))] as Bytes<111>;
+  const four: Vector<4, Uint<8>> = [4, 0, 0, 0];
+  const rest = outcomeRest(disclose(count), disclose(receipts), disclose(gas), disclose(tokens));
+  const leaf = persistentHash<Bytes<132>>([...four, ...(disclose(receipt) as Vector<32, Uint<8>>), ...(rest as Vector<32, Uint<8>>),
+    ...(persistentHash<Bytes<111>>(text) as Vector<32, Uint<8>>), ...(disclose(eventHash) as Vector<32, Uint<8>>)] as Bytes<132>);
+  const shard = fold((node: Bytes<32>, level: Level): Bytes<32> => up(node, level), leaf, disclose(outcomePath));
+  const root = fold((node: Bytes<32>, level: Level): Bytes<32> => up(node, level), persistentHash<Bytes<32>>(shard), disclose(shardPath));
+  assert(root == blocks.lookup(where).outcomes, "the outcome is not in that block");
+  const id = bigEndian8(lockBytes) as Uint<64>;
+  assert(!locks.member(id), "this lock is already proven");
+  assert(!minted_locks.member(id), "this lock is already minted");
+  locks.insert(id, Lock { amount: bigEndian8(amountBytes) as Uint<64>, recipient: disclose(recipient) });
+}
+
+// Records a commitment from the outcome of the bridge's register call in a known block. The call
+// logs "lightsout:join:" with the index and the commitment in hex, then its event.
+export circuit prove_register(
+  block: Bytes<32>, receipt: Bytes<32>, count: Uint<8>, receipts: Vector<2, Bytes<32>>, gas: Bytes<8>, tokens: Bytes<16>,
+  index: Bytes<8>, commitment: Bytes<32>, eventHash: Bytes<32>,
+  outcomePath: Vector<16, Level>, shardPath: Vector<10, Level>
+): [] {
+  const where = disclose(block);
+  assert(blocks.member(where), "the block is not known");
+  const indexBytes = disclose(index) as Vector<8, Uint<8>>;
+  const key = disclose(commitment) as Vector<32, Uint<8>>;
+  const text = [...(pad(15, "lightsout:join:") as Vector<15, Uint<8>>), ...hex(indexBytes),
+    ...hex(slice<8>(key, 0)), ...hex(slice<8>(key, 8)), ...hex(slice<8>(key, 16)), ...hex(slice<8>(key, 24))] as Bytes<95>;
+  const four: Vector<4, Uint<8>> = [4, 0, 0, 0];
+  const rest = outcomeRest(disclose(count), disclose(receipts), disclose(gas), disclose(tokens));
+  const leaf = persistentHash<Bytes<132>>([...four, ...(disclose(receipt) as Vector<32, Uint<8>>), ...(rest as Vector<32, Uint<8>>),
+    ...(persistentHash<Bytes<95>>(text) as Vector<32, Uint<8>>), ...(disclose(eventHash) as Vector<32, Uint<8>>)] as Bytes<132>);
+  const shard = fold((node: Bytes<32>, level: Level): Bytes<32> => up(node, level), leaf, disclose(outcomePath));
+  const root = fold((node: Bytes<32>, level: Level): Bytes<32> => up(node, level), persistentHash<Bytes<32>>(shard), disclose(shardPath));
+  assert(root == blocks.lookup(where).outcomes, "the outcome is not in that block");
+  const id = bigEndian8(indexBytes) as Uint<64>;
+  assert(!joined.member(id), "this index is already registered");
+  joined.insert(id);
+  members.insert(disclose(commitment));
+  // The tree keeps every root it has had. Every 256th registration cuts that list back to the
+  // newest root, and a member proof made against an older one has to be made again.
+  if (indexBytes[7] == 0) {
+    members.resetHistory();
+  }
+}
+
+// Passes when the root is one the member tree has had. The board calls this from its own contract.
+export circuit known_root(root: MerkleTreeDigest): [] {
+  assert(members.checkRoot(disclose(root)), "the root is not known");
+}
+
+export pure circuit wrappedDomain(): Bytes<32> {
+  return pad(32, "midnight-bridge:wnear");
+}
+
+// The coin public key Midnight derives from a coin secret key.
+circuit coinKeyOf(secret: Bytes<32>): Bytes<32> {
+  const tag = pad(21, "midnight:zswap-pk[v1]") as Vector<21, Uint<8>>;
+  return persistentHash<Bytes<53>>([...tag, ...(secret as Vector<32, Uint<8>>)] as Bytes<53>);
+}
+
+// Mints a proven lock to its recipient, once. Amount and recipient come from the lock's proof.
+// Only the recipient can send it, so the coin's note is written by the wallet that must find it.
+// The call reads nothing that another mint or burn writes, so they do not wait for each other.
+export circuit mint(lock_id: Uint<64>): [] {
+  const id = disclose(lock_id);
+  assert(locks.member(id), "the lock is not proven or already minted");
+  const lock = locks.lookup(id);
+  assert(lock.amount > 0, "nothing to mint");
+  assert(disclose(coinKeyOf(coinSecretKey())) == lock.recipient, "only the recipient mints");
+  locks.remove(id);
+  minted_locks.insert(id);
+  // The lock id makes the coin's nonce: no two mints share one.
+  mintShieldedToken(
+    wrappedDomain(),
+    lock.amount,
+    evolveNonce(id as Uint<128>, wrappedDomain()),
+    left<ZswapCoinPublicKey, ContractAddress>(ZswapCoinPublicKey { bytes: lock.recipient })
+  );
+}
+
+// Where the check of a NEAR account id stands: past its end, and whether the last character
+// was a separator. Before the first character counts as after a separator.
+struct NameCheck { ended: Boolean; separator: Boolean; }
+
+// One byte of a NEAR account id: lowercase letters and digits in parts that a single . - or _
+// separates, then zeros to the end.
+circuit nameStep(s: NameCheck, b: Uint<8>): NameCheck {
+  const zero = b == 0;
+  const separator = b == 45 || b == 46 || b == 95;
+  const plain = (b >= 97 && b <= 122) || (b >= 48 && b <= 57);
+  assert(!s.ended || zero, "the recipient goes on after its end");
+  assert(s.ended || zero || plain || separator, "the recipient has a character no NEAR account has");
+  assert(s.ended || !s.separator || plain, "the recipient has a separator at an end or two in a row");
+  return NameCheck { ended: s.ended || zero, separator: separator };
+}
+
+// The id of a burn: the hash of the coin it burns.
+export pure circuit burnId(coin: ShieldedCoinInfo): Bytes<32> {
+  return persistentHash<ShieldedCoinInfo>(coin);
+}
+
+// A burn's id is the hash of the burned coin. Midnight takes a coin once, so no two burns share
+// one, and a burn reads nothing that another burn or a mint writes. NEAR pays a burn to the
+// account it names, so the name must be one NEAR can take: 2 to 64 characters of an account id.
+export circuit burn(coin: ShieldedCoinInfo, near_recipient: Bytes<64>): [] {
+  const name = disclose(near_recipient) as Vector<64, Uint<8>>;
+  const checked = fold((s: NameCheck, b: Uint<8>): NameCheck => nameStep(s, b), NameCheck { ended: false, separator: true }, name);
+  assert(!checked.separator, "the recipient has a separator at an end or two in a row");
+  assert(name[1] != 0, "the recipient has fewer than two characters");
+  const c = disclose(coin);
+  assert(c.color == tokenType(wrappedDomain(), kernel.self()), "the coin is not wrapped NEAR");
+  // The smallest burn is 0.1 wNEAR, as the smallest lock.
+  assert(c.value >= 100000, "a burn is at least 0.1 wNEAR");
+  receiveShielded(c);
+  sendImmediateShielded(c, shieldedBurnAddress(), c.value);
+  const id = burnId(c);
+  burns.insert((id as Vector<32, Uint<8>>)[0], Burn { id: id, near_recipient: disclose(near_recipient), value: c.value });
+  // NEAR reads this log from the transaction: id, value u128 LE, recipient, zeros.
+  const payload = [
+    ...id as Vector<32, Uint<8>>,
+    ...((c.value as Field) as Bytes<16>) as Vector<16, Uint<8>>,
+    ...disclose(near_recipient) as Vector<64, Uint<8>>,
+    ...pad(144, "") as Vector<144, Uint<8>>
+  ] as Bytes<256>;
+  emit(Misc { name: pad(32, "lightsout/burn"), payload: payload });
+}

@@ -1,0 +1,147 @@
+# A hosted LIGHTSOUT deployment.
+# docker compose -f deploy/compose.yml up -d --build        relay only
+# docker compose -f deploy/compose.yml --profile page up -d  with the sandbox page; --profile crowd adds agents that keep acting
+name: lightsout
+
+x-kit: &kit
+  image: lightsout
+  restart: unless-stopped
+  depends_on: [proof-server]
+  # A stop reaches the service through the init process. The service then lets a running
+  # Midnight call land and saves its wallets, which takes up to three minutes.
+  init: true
+  stop_grace_period: 3m
+  volumes:
+    - ./keys/midnight-bridge:/app/contracts/midnight-bridge/managed/midnight-bridge/keys:ro
+    - ./keys/board:/app/contracts/board/managed/board/keys:ro
+    - ./wallet:/app/kit/.wallet
+
+# The chains, both contracts and the fee gateway. A name without a value comes from .env, and
+# a name that .env lacks stays unset.
+x-chain: &chain
+  # The stack's own proof server, or the one PROOF_SERVER_URL names in .env.
+  MIDNIGHT_PROOF_SERVER_URL: ${PROOF_SERVER_URL:-http://proof-server:6300}
+  # A service logs a failure with its stack.
+  LIGHTSOUT_TRACE: 1
+  MIDNIGHT_NETWORK:
+  MIDNIGHT_NODE_URL:
+  MIDNIGHT_NODE_MIN_INTERVAL_MS:
+  MIDNIGHT_INDEXER_HTTP_URL:
+  MIDNIGHT_INDEXER_WS_URL:
+  MIDNIGHT_BRIDGE:
+  MIDNIGHT_BOARD:
+  NEAR_BRIDGE_CONTRACT:
+  NEAR_RPC_URL:
+  NIGHTGATE_API_URL:
+  ODATANO_ACCESS_KEY:
+  NIGHTGATE_AGENT_TOKEN:
+
+services:
+  # Proves every Midnight call of the other services. It sees the coins of the wallets it proves for.
+  proof-server:
+    image: midnightntwrk/proof-server:9.0.0
+    restart: unless-stopped
+    # PROOF_SERVERS=0 in .env starts none, for a stack that proves on PROOF_SERVER_URL.
+    deploy:
+      replicas: ${PROOF_SERVERS:-1}
+
+  # Keeps both light clients at the tip and pays out every burn. Without a gateway it pays
+  # Midnight fees from the wallet of MIDNIGHT_FEE_SEED_HEX.
+  relay:
+    <<: *kit
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    environment:
+      <<: *chain
+      NEAR_RELAYER_ACCOUNT_ID:
+      NEAR_RELAYER_PRIVATE_KEY:
+      MIDNIGHT_FEE_SEED_HEX:
+      MITHRIL_AGGREGATOR_URL:
+      KOIOS_URL:
+    working_dir: /app/kit
+    command: ["node", "--import", "tsx", "src/ops/relay.ts"]
+
+  # Answers the open bounties as the agent of the four LIGHTSOUT_ variables.
+  solver:
+    <<: *kit
+    profiles: [page]
+    environment:
+      <<: *chain
+      LIGHTSOUT_NAME:
+      LIGHTSOUT_NEAR_ACCOUNT_ID:
+      LIGHTSOUT_NEAR_PRIVATE_KEY:
+      LIGHTSOUT_SEED_HEX:
+      LIGHTSOUT_MIN_REWARD:
+      LIGHTSOUT_PAY_OUT_TO:
+      LIGHTSOUT_KEEP:
+      # true in .env: the gateway pays the solver's board calls, so the solver needs no dust.
+      # The agents of the page and of the crowd pay their own board calls, which it does not see.
+      NIGHTGATE_BOARD_FEES:
+      NEARAI_CLOUD_API_KEY:
+      NEARAI_CLOUD_BASE_URL:
+    working_dir: /app/kit
+    command: ["node", "--import", "tsx", "src/ops/solve.ts"]
+
+  # A few agents of the operator that ask, send, withdraw and deposit in turns. Each one is an
+  # MCP server of its own. Claude calls its tools behind a guard, or the rules do without a key.
+  # Of the keys it holds only those of its agents, which .env.crowd names.
+  crowd:
+    <<: *kit
+    profiles: [crowd]
+    env_file: .env.crowd
+    environment:
+      <<: *chain
+      LIGHTSOUT_CROWD:
+      LIGHTSOUT_MIN_REWARD:
+      CROWD_MIND:
+      CROWD_ROUND_SECONDS:
+      CROWD_MODELS:
+      ANTHROPIC_API_KEY:
+      CLAUDE_MODEL:
+      CLAUDE_EFFORT:
+      CLAUDE_BUDGET:
+    working_dir: /app/mcp
+    command: ["node", "--import", "tsx", "src/crowd.ts"]
+
+  # The sandbox page, with one MCP server process per visitor's agent. Of the keys it holds
+  # only those of the agents it lends out, which .env.web names.
+  web:
+    <<: *kit
+    profiles: [page]
+    env_file: .env.web
+    environment:
+      <<: *chain
+      DEMO_HOST: 0.0.0.0
+      LIGHTSOUT_CROWD:
+      CROWD_MIND:
+      DEMO_SESSION_BUDGET:
+      DEMO_DAY_BUDGET:
+      DEMO_FAUCET:
+      DEMO_FAUCET_NEAR:
+      DEMO_FAUCET_PER_DAY:
+      NEARBLOCKS_API_URL:
+      LIGHTSOUT_MIN_REWARD:
+    working_dir: /app/web
+    command: ["node", "--import", "tsx", "src/server.ts"]
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8787/healthz').then((r) => process.exit(r.ok ? 0 : 1), () => process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # The only service that listens outside. It gets the certificate for DEMO_DOMAIN itself.
+  caddy:
+    image: caddy:2
+    profiles: [page]
+    restart: unless-stopped
+    depends_on: [web]
+    ports: ["80:80", "443:443"]
+    environment:
+      DEMO_DOMAIN: ${DEMO_DOMAIN:-localhost}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy:/data
+
+volumes:
+  caddy:
