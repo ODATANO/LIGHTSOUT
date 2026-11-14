@@ -33,6 +33,12 @@ export interface Seen {
   released?: ReadonlyMap<string, string>; // burn id -> the NEAR transaction that paid it out
 }
 
+/** The NEAR calls known before and the ones just listed as one list: the newest first, each transaction once. */
+export function together(before: readonly NearCall[], listed: readonly NearCall[], most: number): NearCall[] {
+  const byTx = new Map([...before, ...listed].map((call) => [call.tx, call]));
+  return [...byTx.values()].sort((a, b) => b.at - a.at || b.height - a.height).slice(0, most);
+}
+
 // Midnight makes a block every six seconds.
 const MIDNIGHT_BLOCK_SECONDS = 6;
 // A lock and a payout stand as a deposit and a withdrawal, so their calls are not listed again.

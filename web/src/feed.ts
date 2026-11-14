@@ -2,14 +2,18 @@
 import { type ContractCall, contractCalls, type NearCall, nearCalls } from 'lightsout-kit/history';
 import { burnReleasedBy } from 'lightsout-kit/near';
 import { type BoardOverview, type BridgeOverview, boardOverview, bridgeOverview } from 'lightsout-kit/overview';
-import { type BridgeRow, timeline } from './timeline.js';
+import { type BridgeRow, timeline, together } from './timeline.js';
 
 // The newest locks and the newest calls on either chain the page lists.
 const LOCKS_SHOWN = 60;
 const CALLS_SHOWN = 150;
 const NEAR_CALLS_SHOWN = 100;
-// The lists of calls come from two indexes, which are asked less often than the chains.
+// The gateway's index of Midnight calls is asked less often than the chains.
 const CALLS_EVERY_MS = 60_000;
+// The public NEAR index allows few requests, so it is asked rarely and for few rows. The rows
+// it listed before are kept. Its free plan with a key allows 420 a day: one every five minutes.
+const NEAR_CALLS_EVERY_MS = (process.env.NEARBLOCKS_API_KEY ? 5 : 15) * 60_000;
+const NEAR_CALLS_A_READ = 25;
 // Payouts whose burn is looked up on NEAR in one round.
 const PAYOUTS_A_ROUND = 4;
 
@@ -26,18 +30,24 @@ export class Feed {
   private readonly released = new Map<string, string>(); // burn id -> the NEAR transaction that paid it out
   private readonly looked = new Set<string>(); // release transactions that were looked up
   private callsAt = 0; // Unix ms
+  private nearCallsAt = 0; // Unix ms
 
   // A list that cannot be read keeps the one before. The page then shows what both contracts say.
   private async readCalls(bridge: BridgeOverview): Promise<void> {
-    if (Date.now() - this.callsAt < CALLS_EVERY_MS) return;
-    this.callsAt = Date.now();
+    const now = Date.now();
+    if (now - this.nearCallsAt >= NEAR_CALLS_EVERY_MS) {
+      this.nearCallsAt = now;
+      // The first read after a start fills the list; the later ones only add what is new.
+      await nearCalls(bridge.near.bridge, this.onNear.length === 0 ? NEAR_CALLS_SHOWN : NEAR_CALLS_A_READ).then(
+        (calls) => (this.onNear = together(this.onNear, calls, NEAR_CALLS_SHOWN)),
+        (e: unknown) => failed('reading the calls on the NEAR contract', e),
+      );
+    }
+    if (now - this.callsAt < CALLS_EVERY_MS) return;
+    this.callsAt = now;
     await contractCalls(bridge.midnight.bridge, CALLS_SHOWN).then(
       (calls) => (this.onMidnight = calls ?? []),
       (e: unknown) => failed('reading the calls on the Midnight bridge', e),
-    );
-    await nearCalls(bridge.near.bridge, NEAR_CALLS_SHOWN).then(
-      (calls) => (this.onNear = calls),
-      (e: unknown) => failed('reading the calls on the NEAR contract', e),
     );
     // The index names a payout's transaction. Which burn it paid is read from NEAR itself.
     const payouts = this.onNear.filter((call) => call.method === 'release' && !this.looked.has(call.tx)).slice(0, PAYOUTS_A_ROUND);

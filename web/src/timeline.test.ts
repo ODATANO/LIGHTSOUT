@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { timeline } from './timeline.js';
+import { timeline, together } from './timeline.js';
 
 const YOCTO = 10n ** 24n;
 const NOW = 1_800_000_000;
@@ -53,4 +53,11 @@ test('a lock and a payout carry their NEAR transaction, and the other NEAR calls
   // The paid burn stands at its payout, the other at its burn, and the first lock at its transaction.
   assert.deepEqual(named(rows), ['near submit_midnight_finality x1', 'withdrawal ee', 'withdrawal ff', 'deposit 1', 'deposit 0']);
   assert.deepEqual(rows.map((row) => (row.kind === 'call' ? undefined : row.tx)), [undefined, 'release200', undefined, 'lock590', undefined]);
+});
+
+test('the NEAR calls listed before stay, each transaction once and the newest first', () => {
+  const before = [onNear('register', 300), onNear('lock', 600)];
+  const listed = [onNear('release', 100), onNear('register', 300)];
+  assert.deepEqual(together(before, listed, 10).map((call) => call.tx), ['release100', 'register300', 'lock600']);
+  assert.deepEqual(together(before, listed, 2).map((call) => call.tx), ['release100', 'register300']);
 });

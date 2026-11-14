@@ -65,7 +65,10 @@ const nearIndex = (account: string): string => (process.env.NEARBLOCKS_API_URL |
 
 /** The newest calls on a NEAR account, the newest first, as the nearblocks index lists them. It names transactions; it proves nothing. */
 export async function nearCalls(account: string, most = 100): Promise<NearCall[]> {
-  const res = await fetch(`${nearIndex(account)}/v1/account/${account}/txns?per_page=${most}&order=desc`, { headers: { Accept: 'application/json' }, signal: AbortSignal.timeout(20_000) });
+  // Without a key the index counts requests by the caller's address, and allows few.
+  const key = process.env.NEARBLOCKS_API_KEY;
+  const headers = { Accept: 'application/json', ...(key ? { Authorization: `Bearer ${key}` } : {}) };
+  const res = await fetch(`${nearIndex(account)}/v1/account/${account}/txns?per_page=${most}&order=desc`, { headers, signal: AbortSignal.timeout(20_000) });
   if (!res.ok) throw new Error(`the NEAR index answered ${res.status} to the list of calls on ${account}`);
   const { txns } = (await res.json()) as { txns: IndexRow[] };
   return txns.flatMap((row) => {

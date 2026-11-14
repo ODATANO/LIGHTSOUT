@@ -385,10 +385,10 @@ p.sees + p, p.hides + p { margin-top: 10px; }
 .proven { display: flex; align-items: center; gap: 9px; margin: 12px 0 0; color: var(--text); font: 500 13px var(--mono); }
 .proven::before { content: ''; flex: none; width: 6px; height: 6px; border-radius: 50%; background: var(--near); }
 .proven:empty { display: none; }
-/* The strip starts at its right end, where the newest tile is, and scrolls left to the older ones.
-   A whole number of tiles fits, so the first one in view is never cut. */
+/* The newest tile is the first one on the left, and the strip scrolls right to the older ones.
+   A whole number of tiles fits, so none in view is cut. */
 .strip::-webkit-scrollbar { display: none; }
-.strip { --tile: calc((100% - 40px) / 5); display: flex; flex-direction: row-reverse; gap: 10px; min-height: 84px; margin: 0; padding: 0; overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; scrollbar-width: none; list-style: none; }
+.strip { --tile: calc((100% - 40px) / 5); display: flex; gap: 10px; min-height: 84px; margin: 0; padding: 0; overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; scrollbar-width: none; list-style: none; }
 .tile { flex: 0 0 var(--tile); min-width: 0; max-width: var(--tile); padding: 10px 12px; overflow: hidden; border: 1px solid var(--line); border-radius: var(--radius-control); background: var(--surface); }
 .tile b, .tile small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .tile .where { display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: top; }
@@ -399,7 +399,7 @@ p.sees + p, p.hides + p { margin-top: 10px; }
 .tile.mine { border-color: var(--midnight); background: rgba(100, 128, 255, 0.1); }
 .tile.none { display: grid; place-items: center; flex: 1 1 auto; max-width: none; border-style: dashed; color: var(--muted); font-size: 13px; }
 .tile.enter { animation: drive-in 0.7s ease-out; }
-@keyframes drive-in { from { max-width: 0; margin-left: -10px; padding-left: 0; padding-right: 0; border-left-width: 0; border-right-width: 0; opacity: 0; } }
+@keyframes drive-in { from { max-width: 0; margin-right: -10px; padding-left: 0; padding-right: 0; border-left-width: 0; border-right-width: 0; opacity: 0; } }
 .contracts { margin-top: 28px; padding-top: 20px; border-top: 1px solid var(--line); }
 .contracts .kv { grid-template-columns: repeat(2, max-content minmax(0, 1fr)); gap: 12px 16px; }
 .contracts .kv dt { color: var(--muted); font-size: 15px; }

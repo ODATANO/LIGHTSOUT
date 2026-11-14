@@ -121,6 +121,7 @@ services:
       DEMO_FAUCET_NEAR:
       DEMO_FAUCET_PER_DAY:
       NEARBLOCKS_API_URL:
+      NEARBLOCKS_API_KEY:
       LIGHTSOUT_MIN_REWARD:
     working_dir: /app/web
     command: ["node", "--import", "tsx", "src/server.ts"]

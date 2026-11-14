@@ -7,9 +7,15 @@
 <meta name="description" content="LIGHTSOUT is a bridge between NEAR and Midnight that nobody has to trust: each chain runs a light client of the other. On top of it an agent asks an AI model without an account, and nobody sees who asked. Start an agent and try it live.">
 <meta name="theme-color" content="#0c0f1a">
 <meta property="og:type" content="website">
+<meta property="og:url" content="__ORIGIN__/">
 <meta property="og:title" content="LIGHTSOUT: a bridge nobody has to trust, an AI nobody sees you ask">
 <meta property="og:description" content="NEAR and Midnight each run a light client of the other, with no operator in between. On top of it an agent asks an AI model without an account, and nobody sees who asked.">
-<meta name="twitter:card" content="summary">
+<meta property="og:image" content="__ORIGIN__/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="LIGHTSOUT: deposit NEAR in public, pay in private on Midnight, ask an AI model and nobody sees who asks.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="__ORIGIN__/og.png">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='0'%3E%3Cstop stop-color='%2300ec97'/%3E%3Cstop offset='.5' stop-color='%235ad1ff'/%3E%3Cstop offset='1' stop-color='%236480ff'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='8' fill='%2307080c'/%3E%3Cg transform='translate(4 4)'%3E%3Ccircle cx='13.200' cy='10.800' r='7' fill='%23060917' stroke='%234a5fd6' stroke-width='1.100'/%3E%3Cpath d='M8.890 5.280A8 8 0 1 0 18.720 15.110 7 7 0 1 1 8.890 5.280z' fill='url(%23g)'/%3E%3C/g%3E%3C/svg%3E">
 <link rel="preload" href="/fonts/inter.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/space-grotesk.woff2" as="font" type="font/woff2" crossorigin>
@@ -75,7 +81,7 @@
   </div>
 
   <figure class="flow visual">
-    <svg class="flow-wide" viewBox="0 0 1160 414" role="img" aria-label="The flow across three zones. Public, on NEAR, where everyone sees who pays what: accounts with their names register and pay NEAR in at the bridge contract, which locks it and pays it out again. Shielded, on Midnight, where nobody sees which member acts: the bridge contract mints wNEAR and burns it, the members are the same agents without names, one of them asks at the board contract, another one asks the model and brings the signed answer, and the board checks it, then pays. In the enclave on NEAR AI the model signs the answer and never sees the asker.">
+    <svg class="flow-wide" viewBox="0 0 1160 414" role="img" aria-label="The flow across three zones. Public, on NEAR, where deposits and withdrawals are public: accounts with their names register and pay NEAR in at the bridge contract, which locks it and pays it out again. Shielded, on Midnight, where nobody sees which member acts: the bridge contract mints wNEAR and burns it, the members are the same agents without names, one of them asks at the board contract, another one asks the model and brings the signed answer, and the board checks it, then pays. In the enclave on NEAR AI the model signs the answer, and nobody sees who asks.">
       <defs>
         <radialGradient id="w-glow-public"><stop offset="0" stop-color="#00ec97" stop-opacity="0.220"/><stop offset="1" stop-color="#00ec97" stop-opacity="0"/></radialGradient>
         <radialGradient id="w-glow-shielded"><stop offset="0" stop-color="#2b3fb5" stop-opacity="0.500"/><stop offset="1" stop-color="#2b3fb5" stop-opacity="0"/></radialGradient>
@@ -92,9 +98,9 @@
       <ellipse cx="200" cy="257" rx="250" ry="180" fill="url(#w-glow-public)" clip-path="url(#w-clip-public)"/>
       <ellipse cx="600" cy="190" rx="340" ry="240" fill="url(#w-glow-shielded)" clip-path="url(#w-clip-shielded)"/>
       <ellipse cx="1046.5" cy="257" rx="150" ry="170" fill="url(#w-glow-enclave)" clip-path="url(#w-clip-enclave)"/>
-      <g class="zone-head public"><use href="#i-near" x="25" y="23" width="18" height="18"/><text x="51" y="37" class="zone-name">PUBLIC · NEAR</text><text x="25" y="60" class="zone-says">Everyone sees who pays what.</text></g>
+      <g class="zone-head public"><use href="#i-near" x="25" y="23" width="18" height="18"/><text x="51" y="37" class="zone-name">PUBLIC · NEAR</text><text x="25" y="60" class="zone-says">Deposits and withdrawals are public.</text></g>
       <g class="zone-head shielded"><use href="#i-midnight" x="409" y="23" width="18" height="18"/><text x="435" y="37" class="zone-name">SHIELDED · MIDNIGHT</text><text x="409" y="60" class="zone-says">Nobody sees which</text><text x="409" y="78" class="zone-says">member acts.</text></g>
-      <g class="zone-head enclave"><use href="#i-shield" x="958" y="23" width="18" height="18"/><text x="984" y="37" class="zone-name">ENCLAVE · NEAR AI</text><text x="958" y="60" class="zone-says">Never sees the asker.</text></g>
+      <g class="zone-head enclave"><use href="#i-shield" x="958" y="23" width="18" height="18"/><text x="984" y="37" class="zone-name">ENCLAVE · NEAR AI</text><text x="958" y="60" class="zone-says">Nobody sees who asks.</text></g>
       <path class="arc" stroke="url(#w-chain)" d="M196 257 L218 257"/>
       <path class="arc" stroke="url(#w-chain)" d="M352 257 L404 257"/>
       <path class="arc" stroke="url(#w-chain)" d="M538 257 L562 257"/>
@@ -130,7 +136,7 @@
       <text x="1046.5" y="359.5" class="does">signs the answer</text>
       <g class="hop mid" transform="translate(765.5 79)"><circle r="10.5"/><text class="step-n" y="4">6</text><text class="step-t" x="18" y="4.5">checks, then pays</text></g>
     </svg>
-    <svg class="flow-tall" viewBox="0 0 340 1120" role="img" aria-label="The flow across three zones. Public, on NEAR, where everyone sees who pays what: accounts with their names register and pay NEAR in at the bridge contract, which locks it and pays it out again. Shielded, on Midnight, where nobody sees which member acts: the bridge contract mints wNEAR and burns it, the members are the same agents without names, one of them asks at the board contract, another one asks the model and brings the signed answer, and the board checks it, then pays. In the enclave on NEAR AI the model signs the answer and never sees the asker.">
+    <svg class="flow-tall" viewBox="0 0 340 1120" role="img" aria-label="The flow across three zones. Public, on NEAR, where deposits and withdrawals are public: accounts with their names register and pay NEAR in at the bridge contract, which locks it and pays it out again. Shielded, on Midnight, where nobody sees which member acts: the bridge contract mints wNEAR and burns it, the members are the same agents without names, one of them asks at the board contract, another one asks the model and brings the signed answer, and the board checks it, then pays. In the enclave on NEAR AI the model signs the answer, and nobody sees who asks.">
       <defs>
         <radialGradient id="t-glow-public"><stop offset="0" stop-color="#00ec97" stop-opacity="0.220"/><stop offset="1" stop-color="#00ec97" stop-opacity="0"/></radialGradient>
         <radialGradient id="t-glow-shielded"><stop offset="0" stop-color="#2b3fb5" stop-opacity="0.500"/><stop offset="1" stop-color="#2b3fb5" stop-opacity="0"/></radialGradient>
@@ -147,9 +153,9 @@
       <ellipse cx="242" cy="260" rx="200" ry="220" fill="url(#t-glow-public)" clip-path="url(#t-clip-public)"/>
       <ellipse cx="170" cy="690" rx="240" ry="280" fill="url(#t-glow-shielded)" clip-path="url(#t-clip-shielded)"/>
       <ellipse cx="242" cy="1038" rx="150" ry="150" fill="url(#t-glow-enclave)" clip-path="url(#t-clip-enclave)"/>
-      <g class="zone-head public"><use href="#i-near" x="25" y="23" width="18" height="18"/><text x="51" y="37" class="zone-name">PUBLIC · NEAR</text><text x="25" y="60" class="zone-says">Everyone sees who pays what.</text></g>
+      <g class="zone-head public"><use href="#i-near" x="25" y="23" width="18" height="18"/><text x="51" y="37" class="zone-name">PUBLIC · NEAR</text><text x="25" y="60" class="zone-says">Deposits and withdrawals are public.</text></g>
       <g class="zone-head shielded"><use href="#i-midnight" x="25" y="471" width="18" height="18"/><text x="51" y="485" class="zone-name">SHIELDED · MIDNIGHT</text><text x="25" y="508" class="zone-says">Nobody sees which</text><text x="25" y="526" class="zone-says">member acts.</text></g>
-      <g class="zone-head enclave"><use href="#i-shield" x="25" y="940" width="18" height="18"/><text x="51" y="954" class="zone-name">ENCLAVE · NEAR AI</text><text x="25" y="977" class="zone-says">Never sees the asker.</text></g>
+      <g class="zone-head enclave"><use href="#i-shield" x="25" y="940" width="18" height="18"/><text x="51" y="954" class="zone-name">ENCLAVE · NEAR AI</text><text x="25" y="977" class="zone-says">Nobody sees who asks.</text></g>
       <path class="arc" stroke="url(#t-chain)" d="M242 283 L242 305"/>
       <path class="arc" stroke="url(#t-chain)" d="M242 419 L242 516"/>
       <path class="arc" stroke="url(#t-chain)" d="M242 630 L242 652"/>
@@ -202,7 +208,7 @@
         <p class="lane-way">NEAR contract → lock → proof under a NEAR header → Midnight contract → mint</p>
         <p class="proven" id="proven-near"></p>
       </header>
-      <ol class="strip" id="lane-in" tabindex="0" aria-label="What went from NEAR to Midnight, the newest on the right"></ol>
+      <ol class="strip" id="lane-in" tabindex="0" aria-label="What went from NEAR to Midnight, the newest first"></ol>
     </article>
     <article class="lane">
       <header class="lane-head">
@@ -211,7 +217,7 @@
         <p class="lane-way">Midnight contract → burn → proof from a finalized block → NEAR contract → pay out</p>
         <p class="proven" id="proven-midnight"></p>
       </header>
-      <ol class="strip" id="lane-out" tabindex="0" aria-label="What went from Midnight to NEAR, the newest on the right"></ol>
+      <ol class="strip" id="lane-out" tabindex="0" aria-label="What went from Midnight to NEAR, the newest first"></ol>
     </article>
   </div>
   <div class="contracts" id="contracts"></div>
@@ -526,14 +532,16 @@
   <div class="runs">
     <article class="card code">
       <h3>Check the live contracts</h3>
-      <p class="note">Needs Node 22 and no key or funds.</p>
-      <pre><code>npm install
+      <p class="note">Needs Node 22 and no key or funds. The code is on <a href="https://github.com/ODATANO/LIGHTSOUT" target="_blank" rel="noopener">github.com/ODATANO/LIGHTSOUT</a>.</p>
+      <pre><code>git clone https://github.com/ODATANO/LIGHTSOUT
+cd LIGHTSOUT
+npm install
 cp .env.example .env
 cd kit &amp;&amp; npm run status</code></pre>
     </article>
     <article class="card code">
       <h3>One agent over MCP</h3>
-      <p class="note">Its tools: whoami, balance, register, deposit, send, withdraw, withdrawal, ask, bounties, solve, refund, collect. A call that changes something is a real proof and a real transaction.</p>
+      <p class="note">Its tools: whoami, balance, register, deposit, send, withdraw, withdrawal, ask, bounties, solve, refund, collect. A call that changes something is a real proof and a real transaction. <code>&lt;repo&gt;</code> is the folder of your clone.</p>
       <pre><code>{
   "mcpServers": {
     "lightsout-alice": {

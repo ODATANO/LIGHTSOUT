@@ -20,6 +20,7 @@ import { AgentProcess, type Outcome, TOOLS, type Tool } from './agents.js';
 import { checked, Refused } from './calls.js';
 import { Feed } from './feed.js';
 import { Guests } from './guests.js';
+import { originOf, withOrigin } from './origin.js';
 import { Budget, Rate } from './limits.js';
 import { agentsOf, Pool, type PoolAgent } from './pool.js';
 
@@ -359,6 +360,12 @@ app.get('/fonts/:file', (c) => {
   const font = FONTS.get(c.req.param('file'));
   return font ? c.body(font, 200, { 'content-type': 'font/woff2', 'cache-control': 'public, max-age=31536000, immutable' }) : c.notFound();
 });
+
+// The page itself is sent with the address it was asked under, for its preview image.
+const PAGE = readFileSync(new URL('../public/index.html', import.meta.url), 'utf8');
+const page = (c: Context) => c.html(withOrigin(PAGE, originOf(c.req.header('host'), c.req.header('x-forwarded-proto'))));
+app.get('/', page);
+app.get('/index.html', page);
 
 app.use('/*', serveStatic({ root: './public' }));
 

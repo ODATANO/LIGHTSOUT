@@ -726,8 +726,8 @@ function laneOf(row) {
 }
 const laneKeys = { in: null, out: null };
 
-// Each lane shows its rows, the newest on the right. A new one drives in there and the rest move left.
-// The strip runs from right to left, so it scrolls back to the older ones.
+// Each lane shows its rows, the newest on the left. A new one drives in there and the rest move
+// right, where the strip scrolls on to the older ones.
 function renderLanes(rows, myBurns) {
   for (const lane of ['in', 'out']) {
     const before = laneKeys[lane];
@@ -844,8 +844,8 @@ document.addEventListener(
     wheelAt = event.timeStamp;
     if (!wheelOn || event.ctrlKey || event.deltaY === 0) return;
     const before = wheelOn.scrollLeft;
-    // The newest tile is on the right, so turning down goes left to the older ones.
-    wheelOn.scrollLeft -= event.deltaY;
+    // The newest tile is on the left, so turning down goes right to the older ones.
+    wheelOn.scrollLeft += event.deltaY;
     if (wheelOn.scrollLeft !== before) event.preventDefault();
   },
   { passive: false },

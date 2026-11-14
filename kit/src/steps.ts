@@ -3,7 +3,7 @@ import { teraToGas } from 'near-api-js';
 import type { TxBuilder } from '@odatano/nightgate-tx/txbuilder';
 import { ownRead, readBridge, renewRead, send } from './bridge.js';
 import { isNearAccount, nearOf, type ShieldedKeys, YOCTO_PER_UNIT } from './codec.js';
-import { continues, followCalls, lockCalls, registerCalls } from './feed.js';
+import { continues, followCalls, lockCalls, outcomeBlock, registerCalls } from './feed.js';
 import { burnBlock, burnTxProof, type FinalizedHere, headAt, headBlock, headersBetween, headersEnd, headTxProof, MAX_BURN_HEADERS, type TxProof } from './midnight-burn-tx.js';
 import { finalityBatch, type MidnightView, nextJustified, upgradeProof } from './midnight-finality.js';
 import { bridgeId, callBridge, type NearLock, nearSource, PROVE_DEPOSIT, PROVE_GAS, type ProvenBurn, type Registration, type RuntimeView, viewBridge } from './near.js';
@@ -95,6 +95,10 @@ export async function proveLock(builder: TxBuilder, bridge: string, lockId: bigi
       continue;
     }
     const proof = await nearSource.receiptProof(receiptId, await nearSource.hashAt(state.tip.head.height));
+    if (state.tip.head.height <= outcomeBlock(proof)) {
+      await moveHead(builder, bridge, outcomeBlock(proof), say);
+      continue;
+    }
     const calls = lockCalls(state, proof, minter?.keys);
     if (calls.length === 0) return 'proven';
     try {
@@ -130,6 +134,10 @@ export async function proveRegistration(builder: TxBuilder, bridge: string, regi
       continue;
     }
     const proof = await nearSource.receiptProof(receiptId, await nearSource.hashAt(state.tip.head.height));
+    if (state.tip.head.height <= outcomeBlock(proof)) {
+      await moveHead(builder, bridge, outcomeBlock(proof), say);
+      continue;
+    }
     try {
       for (const call of registerCalls(state, proof)) say(`${call.circuit} for registration ${index} on Midnight, tx ${await send(builder, bridge, call)}`);
     } catch (e) {

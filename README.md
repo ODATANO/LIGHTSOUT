@@ -6,6 +6,7 @@ A bridge nobody has to trust between [NEAR Protocol](https://near.org) and [Midn
 
 ![architecture](assets/architecture.png)
 
+- Live sandbox: [lightsout.odatano.dev](https://lightsout.odatano.dev)
 - Design and trust model: [docs/architecture.md](docs/architecture.md)
 - A real run with every transaction: [docs/example-run.md](docs/example-run.md)
 - Using an agent on the live deployment: [docs/agents.md](docs/agents.md)
@@ -15,13 +16,38 @@ A bridge nobody has to trust between [NEAR Protocol](https://near.org) and [Midn
 This needs Node 22 and no key or funds. `.env.example` names the live deployment.
 
 ```bash
+git clone https://github.com/ODATANO/LIGHTSOUT
+cd LIGHTSOUT
 npm install
 cp .env.example .env
 cd kit && npm run status
 ```
 
 `status` reads both contracts and the board from the public NEAR testnet RPC and the Midnight
-preview node. It prints where each one stands.
+preview node. It prints where each one stands, with numbers that grow over time (the list of
+burns is cut here):
+
+```
+NEAR bridge oda_bridge.odatano.testnet
+  no key: nobody can replace the contract; code CFvLFpTJyEwQZxyFgDigNUwEozUko3L1RV6wihfxyw3n
+  pays out burns of Midnight bridge 5c39479a5666072e78c7af78a15156ccf9584302a863a6a512e72a29294084ee (match)
+  locks 11, locked 11 NEAR, released 0.9 NEAR
+  a lock is 0.1, 0.5, 1 NEAR; today 11 of 50 NEAR locked and 0.9 of 50 NEAR released
+  registrations 11, each for 0.1 NEAR to odatano.testnet
+  Midnight runtime 2001100; takes new locks
+  follows Midnight to block 103954, authority set 5791 with 6 authorities
+Midnight bridge 5c39479a5666072e78c7af78a15156ccf9584302a863a6a512e72a29294084ee
+  no key: nobody can replace its circuits
+  mints for locks on oda_bridge.odatano.testnet (match)
+  follows NEAR to block 277617512, 1 epoch after its start; producers of the next epoch known
+  locks proven and not minted 0, minted 11, members 11
+  burn a961a03a468779c381038d19d3e802b4b8036503256b237f4ec37bfc972475ce: 0.1 NEAR to heidi.lightsout.odatano.testnet, paid out
+  burn 7b448e8e07f6008cdb64f319f8d961587a0e9c39f4a7b612f2faf682cc221ec8: 0.1 NEAR to heidi.lightsout.odatano.testnet, paid out
+  ...
+Board 43ec11c09a17c848e751e6bd3a4347d4378610ac6ff1dbcdfbe270e38e98f44f
+  no key: nobody can replace its circuits
+  bounties 7: answered 6, open 0, overdue 0, refunded 1
+```
 
 `npm test` in the root runs the tests of the kit, the MCP server, the page's server and both
 Midnight contracts on recorded chain data, without a network or a proof server. The tests that
@@ -91,13 +117,16 @@ is another contract on the same bridge and the same member tree.
 - Both products ran between NEAR testnet and Midnight preview with real proofs: registration,
   lock, mint, private transfer, burn, release; a bounty on an AI answer, which the board paid after it verified the TEE's signature.
 - The live deployment, which `.env.example` names:
-  - NEAR contract: `oda_bridge.odatano.testnet`
+  - NEAR contract: `oda_bridge.odatano.testnet`, code hash
+    `CFvLFpTJyEwQZxyFgDigNUwEozUko3L1RV6wihfxyw3n`. That is `cargo near build reproducible-wasm` in
+    `contracts/near-bridge` at commit `71acd4e15890f02c97a9f763b55dcf1610ec9677`, which the
+    contract itself names (`contract_source_metadata`).
   - Midnight bridge: `5c39479a5666072e78c7af78a15156ccf9584302a863a6a512e72a29294084ee`
   - Board: `43ec11c09a17c848e751e6bd3a4347d4378610ac6ff1dbcdfbe270e38e98f44f`
 - Accepting a NEAR header needs a ledger that verifies Compact's ed25519 circuit: ledger 9.1.0.0
   or later. Preview and mainnet run 9.1.0.1.
-- `npm run status` shows for each of the three contracts whether a key could still change it.
-  Not on mainnet.
+- None of the three contracts has a key, so nobody can replace one of them. `npm run status`
+  reads that from both chains. Not on mainnet.
 
 ## Limits
 
@@ -148,7 +177,8 @@ An agent has four ways in, all on the same calls:
 | SDK | `Agent` from `lightsout-kit/agent`, see below. |
 | Browser | The sandbox page of the live deployment lends a ready agent or makes a new one, and runs one MCP server per agent. The service holds their keys, so it is a demo, not how an agent should run. |
 
-An MCP client starts the server like this, with the deployment in `.env`:
+An MCP client starts the server like this, with the deployment in `.env`. `<repo>` is the folder
+of your clone:
 
 ```json
 {

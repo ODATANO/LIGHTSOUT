@@ -112,6 +112,12 @@ export function lockCalls(state: Pick<Ledger, 'blocks' | 'locks' | 'minted_locks
   return calls;
 }
 
+/**
+ * The height of the block that holds the proof's outcome root. NEAR puts it into a block after
+ * the call's own, and the head commits only to blocks below itself.
+ */
+export const outcomeBlock = (proof: LightClientProof): bigint => BigInt(proof.block_header_lite.inner_lite.height);
+
 /** The calls that prove a registration from its outcome proof. Empty when the bridge has it. */
 export function registerCalls(state: Pick<Ledger, 'blocks' | 'joined'>, proof: LightClientProof): Call[] {
   if (state.joined.member(registrationIn(proof).index)) return [];
