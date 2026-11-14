@@ -12,7 +12,7 @@ export type Act = Exclude<Action, 'wait'>;
 export const ACTS: readonly Act[] = ['ask', 'send', 'withdraw', 'deposit'];
 
 /** What one agent does at most in a UTC day. The board takes 32 calls a day from a member. */
-export const PER_DAY: Record<Act, number> = { ask: 14, send: 6, withdraw: 2, deposit: 3 };
+export const PER_DAY: Record<Act, number> = { ask: 12, send: 8, withdraw: 16, deposit: 16 };
 export const REWARDS: readonly string[] = ['0.01', '0.02', '0.05'];
 /** What the rules send, and the most one transfer inside the crowd moves. */
 export const SEND = unitsOf('0.02');

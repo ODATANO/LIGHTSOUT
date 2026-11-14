@@ -1,12 +1,13 @@
 // Answers the open bounties on the board as one agent: asks the model on NEAR AI, seals its
 // signed response, hands it over and collects the reward. Needs NEARAI_CLOUD_API_KEY.
-// npm run solve -- [--as <name>] [--min <wNEAR>] [--once] [--pay-out-to <NEAR accounts>] [--keep <wNEAR>]   --min: by default LIGHTSOUT_MIN_REWARD or 0.01
+// npm run solve -- [--as <name>] [--min <wNEAR>] [--once] [--pay-out-to <NEAR accounts>] [--keep <wNEAR>] [--share <n>/<of>]
+// --min: by default LIGHTSOUT_MIN_REWARD or 0.01. --share: this solver's part of a board that several solvers answer, by default 1/1.
 import '../plain-errors.js';
 import { resolve } from 'node:path';
 import { setTimeout as sleep } from 'node:timers/promises';
 import { parseArgs } from 'node:util';
 import { Agent } from '../agent.js';
-import { forSolver, winnable } from '../board/next.js';
+import { fallsTo, forSolver, shareOf, winnable } from '../board/next.js';
 import { LEAST_BURN, nearOf, unitsOf } from '../codec.js';
 import { say } from '../log.js';
 import { reasonOf } from '../reason.js';
@@ -16,6 +17,8 @@ const EVERY_MS = 30_000;
 // A bounty this agent failed on waits before the next try, twice as long after each failure.
 const RETRY_MS = 2 * 60_000;
 const RETRY_MAX_MS = 60 * 60_000;
+// A bounty of another solver's share is taken once it stood open this long: longer than an answer takes.
+const OTHERS_AFTER_MS = 14 * 60_000;
 
 const { values } = parseArgs({
   options: {
@@ -24,17 +27,20 @@ const { values } = parseArgs({
     once: { type: 'boolean', default: false },
     'pay-out-to': { type: 'string', default: process.env.LIGHTSOUT_PAY_OUT_TO ?? '' },
     keep: { type: 'string', default: process.env.LIGHTSOUT_KEEP || '0.5' },
+    share: { type: 'string', default: process.env.LIGHTSOUT_SOLVER_SHARE || '1/1' },
   },
 });
 const least = unitsOf(values.min);
 const payTo = values['pay-out-to'].split(',').map((account) => account.trim()).filter(Boolean);
 const keep = unitsOf(values.keep);
+const share = shareOf(values.share);
 const agent = await Agent.open(values.as ? agentNamed(values.as) : agentFromEnv(resolve('.wallet')), { say });
 // A stop lets the running call land, then saves the wallets. The next start goes on from the drop left.
 const stopping = new AbortController();
 for (const signal of ['SIGINT', 'SIGTERM'] as const) process.on(signal, () => stopping.abort());
 const failures = new Map<string, { count: number; at: number }>();
 const left = new Set<string>();
+const seen = new Map<string, number>(); // bounty -> when this process first saw it open
 let collectFailedAt = 0;
 
 function waits(bounty: string): boolean {
@@ -89,7 +95,11 @@ async function answerNext(): Promise<boolean> {
     left.add(id);
     say(`bounty ${id}: under ten minutes to its deadline, left to its asker`);
   }
-  const bounty = open.find((b) => winnable(b, now) && !waits(b.id));
+  for (const id of seen.keys()) if (!open.some((b) => b.id === id)) seen.delete(id);
+  for (const { id } of open) if (!seen.has(id)) seen.set(id, Date.now());
+  // Its own share at once. Another solver's only when that one did not answer in time.
+  const due = (id: string): boolean => fallsTo(id, share) || Date.now() - (seen.get(id) ?? Date.now()) >= OTHERS_AFTER_MS;
+  const bounty = open.find((b) => winnable(b, now) && !waits(b.id) && due(b.id));
   if (!bounty) return false;
   say(`bounty ${bounty.id}: ${nearOf(bounty.reward ?? 0n)} wNEAR for ${bounty.model} on "${bounty.prompt}"`);
   try {

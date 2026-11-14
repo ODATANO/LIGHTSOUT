@@ -36,7 +36,7 @@ test('the rules act through the same guard', async () => {
   assert.deepEqual(waited.inner.reached, []);
 
   // The kit's own rules, with rolls that pick the first question of their list.
-  const rolls = [0.5, 0, 0];
+  const rolls = [0.9, 0, 0];
   const real = await guardOf();
   await ruleTurn(real.guard, ruleMind(() => rolls.shift() ?? 0), DEFAULT_MODEL);
   assert.equal(real.inner.reached[0]?.name, 'ask');

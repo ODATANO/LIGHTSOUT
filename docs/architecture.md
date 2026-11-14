@@ -263,7 +263,9 @@ proof against an older root is built again. The call also stores a mark, the
 hash of the secret, the day and a slot below 32. A used mark is refused, so a
 member makes at most 32 such calls per day, and two marks cannot be linked
 without the secret. The marks of a day that has passed can be removed
-(`forget_marks`).
+(`forget_marks`). An answer is one such call, so one solver gives 32 answers a day. Several
+solvers split a board by the bounties' ids (`npm run solve -- --share 2/2`), and each takes
+another's bounty once it stood open for 14 minutes.
 
 ### The board
 
@@ -340,7 +342,8 @@ A crowd (`npm run crowd` in `mcp/`) is a loop over several such servers, one pro
    today, what the crowd did lately and what is possible now. It never sees a key.
 3. A guard in code stands between the model and the server. It lets six tools through:
    `balance`, `bounties`, `ask`, `send`, `withdraw`, `deposit`. A turn has one action. An
-   agent asks 14 times a day at most, sends 6 times, withdraws twice and deposits 3 times.
+   agent asks 12 times a day at most, sends 8 times, and withdraws and deposits 16 times each,
+   so that the bridge shows a steady back and forth.
 4. The guard rebuilds every call from checked values. A question is short plain English
    without an address, a link or a long number, and no question twice. A transfer goes to
    another agent of the crowd, 0.05 wNEAR at most. A withdrawal is 0.1 wNEAR to the agent's own

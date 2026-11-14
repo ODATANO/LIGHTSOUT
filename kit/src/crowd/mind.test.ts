@@ -59,28 +59,28 @@ test('a question of the crowd is short plain text that nobody asked before', () 
   for (const question of QUESTIONS) assert.equal(fault(question), undefined, question);
 });
 
-test('the rules fill up first, ask most of the time and never repeat a question', async () => {
+test('the rules fill up first, cross the bridge most of the time and never repeat a question', async () => {
   const rolls = (...values: number[]) => () => values.shift() ?? 0.99;
   const low = view({ may: { ask: false, send: false, withdraw: false, deposit: true } });
   assert.equal((await ruleMind(rolls(0.9)).decide(low)).action, 'deposit');
   assert.equal((await ruleMind(rolls(0.01)).decide(view())).action, 'withdraw');
-  assert.equal((await ruleMind(rolls(0.1)).decide(view())).action, 'deposit');
-  assert.deepEqual(await ruleMind(rolls(0.2, 0)).decide(view()), decision({ action: 'send', to: 'heidi', reason: 'a private transfer inside the crowd' }));
+  assert.equal((await ruleMind(rolls(0.4)).decide(view())).action, 'deposit');
+  assert.deepEqual(await ruleMind(rolls(0.65, 0)).decide(view()), decision({ action: 'send', to: 'heidi', reason: 'a private transfer inside the crowd' }));
   // A roll for a transfer with nobody to send to ends in a question.
-  assert.equal((await ruleMind(rolls(0.2, 0, 0, 0)).decide(view({ others: [] }))).action, 'ask');
+  assert.equal((await ruleMind(rolls(0.65, 0, 0, 0)).decide(view({ others: [] }))).action, 'ask');
 
-  const asked = await ruleMind(rolls(0.5, 0, 0, 0)).decide(view({ onBoard: [QUESTIONS[0] ?? ''] }));
+  const asked = await ruleMind(rolls(0.9, 0, 0, 0)).decide(view({ onBoard: [QUESTIONS[0] ?? ''] }));
   assert.equal(asked.action, 'ask');
   assert.equal(asked.question, QUESTIONS[1]);
   assert.equal(asked.reward, '0.01');
   assert.deepEqual(checked(asked, view({ onBoard: [QUESTIONS[0] ?? ''] }), DEFAULT_MODEL), { action: 'ask', question: QUESTIONS[1], reward: '0.01' });
 
   const all = view({ onBoard: [...QUESTIONS] });
-  assert.equal((await ruleMind(rolls(0.5)).decide(all)).action, 'wait');
+  assert.equal((await ruleMind(rolls(0.9)).decide(all)).action, 'wait');
   const busy = view({ open: [{ question: 'a', minutes: 1 }, { question: 'b', minutes: 2 }] });
-  assert.equal((await ruleMind(rolls(0.5)).decide(busy)).action, 'wait');
+  assert.equal((await ruleMind(rolls(0.9)).decide(busy)).action, 'wait');
   const broke = view({ may: { ask: false, send: false, withdraw: false, deposit: false } });
-  assert.equal((await ruleMind(rolls(0.5)).decide(broke)).action, 'wait');
+  assert.equal((await ruleMind(rolls(0.9)).decide(broke)).action, 'wait');
 });
 
 test('counts last for one UTC day and survive a restart', async () => {

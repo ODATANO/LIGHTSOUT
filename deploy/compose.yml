@@ -75,8 +75,29 @@ services:
       LIGHTSOUT_MIN_REWARD:
       LIGHTSOUT_PAY_OUT_TO:
       LIGHTSOUT_KEEP:
+      # 1/2 in .env when solver-2 runs beside it. Unset, this solver answers every bounty.
+      LIGHTSOUT_SOLVER_SHARE:
       # true in .env: the gateway pays the solver's board calls, so the solver needs no dust.
       # The agents of the page and of the crowd pay their own board calls, which it does not see.
+      NIGHTGATE_BOARD_FEES:
+      NEARAI_CLOUD_API_KEY:
+      NEARAI_CLOUD_BASE_URL:
+    working_dir: /app/kit
+    command: ["node", "--import", "tsx", "src/ops/solve.ts"]
+
+  # A second solver, for a board that asks more than the 32 answers a day one member can give.
+  # .env.solver-2 names its agent with the four LIGHTSOUT_ variables and its share, 2/2.
+  solver-2:
+    <<: *kit
+    profiles: [solver-2]
+    env_file:
+      - path: .env.solver-2
+        required: false
+    environment:
+      <<: *chain
+      LIGHTSOUT_MIN_REWARD:
+      LIGHTSOUT_PAY_OUT_TO:
+      LIGHTSOUT_KEEP:
       NIGHTGATE_BOARD_FEES:
       NEARAI_CLOUD_API_KEY:
       NEARAI_CLOUD_BASE_URL:

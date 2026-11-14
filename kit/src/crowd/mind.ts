@@ -42,7 +42,7 @@ Each round you decide one thing:
 - deposit: lock NEAR so that wNEAR is minted for you on Midnight.
 - wait: do nothing this round.
 
-Your view says what you hold, what you already did today, what the crowd did lately and which actions are possible now (may). Choose only an action whose may is true. Over a day a visitor should see a mix: mostly questions, and among them a few private transfers, withdrawals and deposits, so that a member who sends or withdraws is one of several. Look at what you did today and at what the crowd did lately. When that shows only questions, send, withdraw or deposit instead. Deposit when your wNEAR runs low. Wait when you have two questions open and nothing else is due.
+Your view says what you hold, what you already did today, what the crowd did lately and which actions are possible now (may). Choose only an action whose may is true. Over a day a visitor should see a steady back and forth over the bridge: deposits and withdrawals in about equal number, and between them questions and a few private transfers, so that a member who sends or withdraws is one of several. Look at what you did today and at what the crowd did lately, and choose what is behind: a withdrawal after a deposit of the crowd, a deposit after a withdrawal, a question when the board shows few. Deposit at once when your wNEAR runs low. Wait only when no action is possible.
 
 A question is public for good and is answered by a small open model in a sentence or a short paragraph. Write a general-knowledge question about science, nature, history, language, mathematics, cooking, geography or computing. Do not repeat or rephrase a question that is on the board or in the recent list. Name no living person, ask for no medical, legal or financial advice, and put no address, link or number sequence into it.`;
 
@@ -80,8 +80,8 @@ export function checked(decision: Decision, view: View, model: string): Move | {
 }
 
 /**
- * Decides without a model: mostly a question from the list, sometimes a transfer or a trip over
- * the bridge. `random` returns numbers from 0 up to 1.
+ * Decides without a model: mostly a trip over the bridge, between them a question from the
+ * list or a transfer. `random` returns numbers from 0 up to 1.
  */
 export function ruleMind(random: () => number = Math.random): { decide(view: View): Promise<Decision> } {
   const pick = <T>(items: readonly T[]): T | undefined => items[Math.floor(random() * items.length)];
@@ -91,10 +91,10 @@ export function ruleMind(random: () => number = Math.random): { decide(view: Vie
       // Low on wNEAR, the agent fills up before anything else.
       if (view.may.deposit && !view.may.ask) return { ...none, action: 'deposit', reason: 'wNEAR runs low' };
       const roll = random();
-      if (roll < 0.06 && view.may.withdraw) return { ...none, action: 'withdraw', reason: 'shows the way back to NEAR' };
-      if (roll < 0.12 && view.may.deposit) return { ...none, action: 'deposit', reason: 'shows the way in from NEAR' };
+      if (roll < 0.3 && view.may.withdraw) return { ...none, action: 'withdraw', reason: 'shows the way back to NEAR' };
+      if (roll < 0.6 && view.may.deposit) return { ...none, action: 'deposit', reason: 'shows the way in from NEAR' };
       const to = pick(view.others);
-      if (roll < 0.24 && view.may.send && to) return { ...none, action: 'send', to, reason: 'a private transfer inside the crowd' };
+      if (roll < 0.7 && view.may.send && to) return { ...none, action: 'send', to, reason: 'a private transfer inside the crowd' };
       const question = pick(QUESTIONS.filter((asked) => !taken(asked, view)));
       const reward = pick(view.rewards);
       if (view.may.ask && view.open.length < OPEN_AT_MOST && question && reward) return { ...none, action: 'ask', question, reward, reason: 'a question from the list' };

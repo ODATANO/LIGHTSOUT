@@ -17,10 +17,10 @@ test('an agent with funds and a free day may do everything', () => {
 
 test('a day\'s limit and the reserves rule an action out, each with its reason', () => {
   assert.deepEqual(barred(sight(), PER_DAY, REWARDS), {
-    ask: "grace reached today's limit of 14 questions",
-    send: "grace reached today's limit of 6 transfers",
-    withdraw: "grace reached today's limit of 2 withdrawals",
-    deposit: "grace reached today's limit of 3 deposits",
+    ask: `grace reached today's limit of ${PER_DAY.ask} questions`,
+    send: `grace reached today's limit of ${PER_DAY.send} transfers`,
+    withdraw: `grace reached today's limit of ${PER_DAY.withdraw} withdrawals`,
+    deposit: `grace reached today's limit of ${PER_DAY.deposit} deposits`,
   });
   assert.deepEqual(barred(sight({ wnear: unitsOf('0.049') }), none, REWARDS), { ask: 'grace holds too little wNEAR for a question', send: 'grace keeps 0.3 wNEAR for questions', withdraw: 'grace keeps 0.3 wNEAR for questions' });
   // A transfer of the rules needs 0.32 wNEAR and a withdrawal 0.4.
@@ -42,7 +42,7 @@ test('the view shows the agent\'s open questions, the board and what it did toda
     { mine: false, state: 'refunded', deadline: now - 600 },
   ];
   const recent = Array.from({ length: 15 }, (_, i) => `line ${i}`);
-  const today = { ask: 3, send: 1, withdraw: 2, deposit: 0 };
+  const today = { ask: 3, send: 1, withdraw: PER_DAY.withdraw, deposit: 0 };
   assert.deepEqual(viewOf(sight({ bounties, recent }), today, ['0.02', '0.05'], now), {
     name: 'grace',
     wnear: '0.8',

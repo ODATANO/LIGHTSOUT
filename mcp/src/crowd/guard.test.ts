@@ -152,9 +152,9 @@ test('each agent has its own counts for a UTC day', async () => {
     for (let done = 0; done < PER_DAY[tool]; done++) assert.equal(await tried((await guardOf({ counts })).guard, tool, args), 'ok', `${tool} ${done + 1}`);
     assert.match(await tried((await guardOf({ counts })).guard, tool, args), new RegExp(`grace reached today's limit of ${PER_DAY[tool]} `));
   }
-  for (let done = 0; done < 14; done++) assert.equal(await tried((await guardOf({ counts })).guard, 'ask', { prompt: `Which planet is number ${done + 1} from the Sun?`, reward: '0.01' }), 'ok');
+  for (let done = 0; done < PER_DAY.ask; done++) assert.equal(await tried((await guardOf({ counts })).guard, 'ask', { prompt: `Which planet is number ${done + 1} from the Sun?`, reward: '0.01' }), 'ok');
   const full = await guardOf({ counts });
-  assert.equal(await tried(full.guard, 'ask', { prompt: QUESTION, reward: '0.01' }), "grace reached today's limit of 14 questions");
+  assert.equal(await tried(full.guard, 'ask', { prompt: QUESTION, reward: '0.01' }), `grace reached today's limit of ${PER_DAY.ask} questions`);
   assert.deepEqual(full.guard.allows().left_today, { ask: 0, send: 0, withdraw: 0, deposit: 0 });
   assert.deepEqual(full.guard.view.may, { ask: false, send: false, withdraw: false, deposit: false });
   assert.deepEqual(full.inner.reached, []);
