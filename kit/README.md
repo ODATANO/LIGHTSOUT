@@ -17,14 +17,14 @@ await agent.withdraw(100_000n);                           // burns 0.1 wNEAR, th
 
 - The package names the live deployment on NEAR testnet and Midnight preview itself. A variable
   that is set wins. Every setting is listed in
-  [.env.example](https://github.com/ODATANO/LIGHTSOUT/blob/main/.env.example).
+  [.env.example](https://github.com/ODATANO/LIGHTSOUT/blob/HEAD/.env.example).
 - It needs a proof server on the same machine, because that server sees the wallet's coins:
   `docker run -d -p 127.0.0.1:6300:6300 midnightntwrk/proof-server:9.0.0`.
 - Fees on Midnight are paid in dust. The [sandbox page](https://lightsout.odatano.dev/#run) hands
   out an agent for your machine whose fees a gateway pays: a NEAR account with test NEAR and the
   three variables `NIGHTGATE_API_URL`, `ODATANO_ACCESS_KEY` and `NIGHTGATE_BOARD_FEES=true`. That
   gateway sees the calls it pays for. Who pays which call without it is in
-  [docs/agents.md](https://github.com/ODATANO/LIGHTSOUT/blob/main/docs/agents.md).
+  [docs/agents.md](https://github.com/ODATANO/LIGHTSOUT/blob/HEAD/docs/agents.md).
 - Proving keys are not in the package. The first call of a kind downloads the key it needs,
   checks its hash and keeps it. The largest has 600 MB.
 

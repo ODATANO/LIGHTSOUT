@@ -9,7 +9,8 @@ import { env } from '../env.js';
 import { say } from '../log.js';
 import { newestIsDue, runtimeSigns } from '../midnight-finality.js';
 import { type MithrilView, syncMithril } from '../mithril.js';
-import { type BridgeConfig, bridgeId, callBridge, closedBecause, configFor, nearAccount, type NearLock, nearSource, PROVE_DEPOSIT, PROVE_GAS, type RuntimeView, viewBridge } from '../near.js';
+import { type BridgeConfig, bridgeId, callBridge, closedBecause, configFor, nearAccount, type NearLock, nearSource, PROVE_DEPOSIT, PROVE_GAS, registrationAt, type RuntimeView, viewBridge } from '../near.js';
+import { highestOf, openEntries } from '../open-entries.js';
 import { reasonOf } from '../reason.js';
 import { followMidnight, followNear, HEAD_REFRESH_BLOCKS, proveHead, releaseBurn } from '../steps.js';
 import { bridgeTidy } from '../tidy.js';
@@ -26,30 +27,33 @@ const account = nearAccount('RELAYER');
 await configFor(bridge);
 // The calls move no coins, so any seed signs them.
 const builder = await openBridgeBuilder(randomBytes(64).toString('hex'), { proofServerUrl: await proofServer() });
-// The first lock this process has not seen minted.
+// The first lock this process has not seen minted, and the first registration not seen on Midnight.
 let fromLock = 0n;
+let fromRegistration = 0n;
 const reason = (e: unknown) => (e instanceof Error ? `${e.name}: ${reasonOf(e)}` : String(e));
 say(`relaying between ${bridgeId} and Midnight bridge ${bridge} as ${account.accountId}`);
 
 /**
- * The NEAR height the Midnight bridge's head must pass: the highest block of a lock that
- * Midnight has not minted, or the head itself once it is old. The NEAR bridge takes new funds
- * only while the Midnight bridge's head is recent, so an old head gets a newer header.
+ * The NEAR height the Midnight bridge's head must pass: the highest block of a lock Midnight
+ * has not minted or of a registration it has not got, or the head itself once it is old. The
+ * NEAR bridge takes new funds only while that head is recent, so an old head gets a newer header.
  */
 async function wantedHeight(): Promise<bigint | undefined> {
   const state = await readBridge(bridge);
-  const next = BigInt((await viewBridge<BridgeConfig>('get_config'))!.next_lock_id);
+  const config = (await viewBridge<BridgeConfig>('get_config'))!;
   const head = state.tip.head.height;
-  let highest: bigint | undefined = (await nearSource.finalHeight()) - head >= HEAD_REFRESH_BLOCKS ? head : undefined;
-  for (let id = fromLock; id < next; id++) {
-    if (state.minted_locks.member(id)) {
-      if (highest === undefined) fromLock = id + 1n;
-      continue;
-    }
+  const locks = await openEntries(fromLock, BigInt(config.next_lock_id), (id) => state.minted_locks.member(id), async (id) => {
     const lock = await viewBridge<NearLock>('get_lock', { lock_id: id.toString() });
-    if (lock && (highest === undefined || BigInt(lock.block_height) > highest)) highest = BigInt(lock.block_height);
-  }
-  return highest;
+    return lock ? BigInt(lock.block_height) : undefined;
+  });
+  const registrations = await openEntries(fromRegistration, BigInt(config.registered), (index) => state.joined.member(index), async (index) => {
+    const found = await registrationAt(index);
+    return found ? BigInt(found.registration.block_height) : undefined;
+  });
+  fromLock = locks.from;
+  fromRegistration = registrations.from;
+  const old = (await nearSource.finalHeight()) - head >= HEAD_REFRESH_BLOCKS ? head : undefined;
+  return highestOf(old, locks.highest, registrations.highest);
 }
 
 // Headers this process saw proposed. Once one is no longer proposed, its signature marks can go.

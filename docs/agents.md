@@ -73,3 +73,7 @@ Its last section makes an agent for your own machine instead. Your browser makes
 the Midnight seed, the faucet pays the key's account, and a gateway key pays the agent's Midnight
 fees for a week. The page keeps neither key nor seed, and the block it fills in starts
 `npx lightsout-mcp` with that agent.
+
+A deployment can put a bot check in front of both payments of its faucet, with the two keys of
+a Cloudflare Turnstile widget (`DEMO_TURNSTILE_SITE_KEY`, `DEMO_TURNSTILE_SECRET_KEY`). The
+visitor's browser loads that check from Cloudflare when one of the two buttons is pressed.

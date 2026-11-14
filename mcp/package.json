@@ -1,6 +1,6 @@
 {
   "name": "lightsout-mcp",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "MCP server for one LIGHTSOUT agent: deposit NEAR, send wNEAR, withdraw to NEAR, ask a model for a reward, answer bounties",
   "license": "Apache-2.0",
@@ -30,7 +30,7 @@
   "dependencies": {
     "@anthropic-ai/sdk": "1.8.0",
     "@modelcontextprotocol/sdk": "1.32.2",
-    "lightsout-kit": "0.1.0",
+    "lightsout-kit": "0.1.1",
     "zod": "4.6.7"
   },
   "devDependencies": {

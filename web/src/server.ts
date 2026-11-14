@@ -8,7 +8,6 @@ import { createRequire } from 'node:module';
 import { resolve } from 'node:path';
 import { serve } from '@hono/node-server';
 import { getConnInfo } from '@hono/node-server/conninfo';
-import { serveStatic } from '@hono/node-server/serve-static';
 import { type Context, Hono } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
 import { deleteCookie, getCookie, setCookie } from 'hono/cookie';
@@ -21,10 +20,12 @@ import { AgentProcess, type Outcome, TOOLS, type Tool } from './agents.js';
 import { checked, Refused } from './calls.js';
 import { Feed } from './feed.js';
 import { Guests, STATE_DIR } from './guests.js';
+import { CHECK_ORIGIN, type Human, turnstile } from './human.js';
 import { originOf, withOrigin } from './origin.js';
 import { Budget, Rate } from './limits.js';
 import { OwnAgents, type Redeemed } from './own.js';
 import { agentsOf, Pool, type PoolAgent } from './pool.js';
+import { pageFiles } from './static.js';
 
 const PORT = Number(process.env.DEMO_PORT ?? 8787);
 const HOST = process.env.DEMO_HOST ?? '127.0.0.1';
@@ -93,6 +94,11 @@ const feeCodes = (process.env.DEMO_FEE_CODES ?? '').split(',').map((code) => cod
 const own = new OwnAgents(feeCodes, Number(process.env.DEMO_OWN_PER_DAY || '5'), redeemCode, resolve(STATE_DIR, `own-agents-${network}.json`));
 await own.load();
 const ownOf = new Map<string, { account: string; at: number }>(); // visitor address -> the agent it got
+// The bot check in front of what the faucet pays. Without its two keys nothing is checked.
+const humanSite = process.env.DEMO_TURNSTILE_SITE_KEY;
+const humanSecret = process.env.DEMO_TURNSTILE_SECRET_KEY;
+if (Boolean(humanSite) !== Boolean(humanSecret)) throw new Error('DEMO_TURNSTILE_SITE_KEY and DEMO_TURNSTILE_SECRET_KEY are set together or not at all');
+const human: Human | undefined = humanSecret ? turnstile(humanSecret) : undefined;
 const seeAgents = (): void => void pool.refresh().catch((e: unknown) => console.error('reading the agents\' registrations:', e));
 seeAgents();
 // The agents that act by themselves beside the visitors. Each has a process of its own already.
@@ -132,6 +138,18 @@ async function redeemCode(code: string): Promise<Redeemed> {
 /** The visitor's address: the one the proxy in front names, else the socket's. */
 function addressOf(c: Context): string {
   return c.req.header('x-forwarded-for')?.split(',').at(-1)?.trim() || getConnInfo(c).remote.address || 'unknown';
+}
+
+/** The answer to a request whose bot check did not pass; undefined when it passed or none is set. */
+async function refusedAsBot(c: Context, token: unknown): Promise<Response | undefined> {
+  if (!human) return undefined;
+  try {
+    if (await human(token, addressOf(c))) return undefined;
+  } catch (e) {
+    console.error('the bot check could not be asked:', e);
+    return c.json({ error: 'The check that you are no bot could not be made. Try again in a moment.' }, 502);
+  }
+  return c.json({ error: 'The check that you are no bot did not pass. Try again.' }, 403);
 }
 
 // Keeps every job that waits or runs and each tool's newest and newest finished one, and drops the oldest of the rest.
@@ -248,6 +266,8 @@ app.use(
   secureHeaders({
     contentSecurityPolicy: {
       defaultSrc: ["'self'"],
+      // The bot check runs a script and a frame of its own origin.
+      ...(human ? { scriptSrc: ["'self'", CHECK_ORIGIN], frameSrc: [CHECK_ORIGIN] } : {}),
       imgSrc: ["'self'", 'data:'],
       objectSrc: ["'none'"],
       baseUri: ["'none'"],
@@ -276,6 +296,7 @@ app.get('/api/public', (c) =>
       readyAgents: pool.free(false),
       freshAgents: pool.free(true) + (guests.open ? 1 : 0),
       ownAgents: ownOpen(),
+      humanCheck: human ? humanSite : undefined,
       crowd: crowd.length,
       crowdMind: process.env.CROWD_MIND === 'claude' ? 'model' : 'rules',
       leastReward: nearOf(leastReward),
@@ -288,7 +309,11 @@ app.get('/api/public', (c) =>
 app.post('/api/session', async (c) => {
   const known = sessions.get(getCookie(c, COOKIE) ?? '');
   if (known) return c.json({ agent: known.agent.id, fresh: known.fresh });
-  const fresh = ((await c.req.json().catch(() => undefined)) as { fresh?: unknown } | undefined)?.fresh === true;
+  const body = (await c.req.json().catch(() => undefined)) as { fresh?: unknown; human?: unknown } | undefined;
+  const fresh = body?.fresh === true;
+  // An agent from zero costs the faucet NEAR, so it goes to a visitor who passed the bot check.
+  const refused = fresh ? await refusedAsBot(c, body?.human) : undefined;
+  if (refused) return refused;
   const address = addressOf(c);
   const held = [...sessions.values()].filter((session) => session.address === address).length;
   if (held >= SESSIONS_PER_ADDRESS || !sessionStarts.allows(address)) return c.json({ error: 'Your address has started enough agents for now. End a session, or try again later.' }, 429);
@@ -377,9 +402,12 @@ app.post('/api/agent/call', async (c) => {
 // and a gateway key for its fees. A second try for the same account pays nothing twice.
 app.post('/api/own-agent', async (c) => {
   const address = addressOf(c);
-  const account = ((await c.req.json().catch(() => undefined)) as { account?: unknown } | undefined)?.account;
+  const body = (await c.req.json().catch(() => undefined)) as { account?: unknown; human?: unknown } | undefined;
+  const account = body?.account;
   if (typeof account !== 'string' || !/^[0-9a-f]{64}$/.test(account)) return c.json({ error: 'account must be the 64 hex digits of a NEAR public key' }, 400);
   if (own.has(account)) return c.json({ error: 'This account has its agent already.' }, 409);
+  const refused = await refusedAsBot(c, body?.human);
+  if (refused) return refused;
   if (!own.waits(account)) {
     if (!ownOpen()) return c.json({ error: 'No more agents are handed out today. Try again tomorrow.' }, 429);
     const before = ownOf.get(address);
@@ -414,7 +442,7 @@ const page = (c: Context) => c.html(withOrigin(PAGE, originOf(c.req.header('host
 app.get('/', page);
 app.get('/index.html', page);
 
-app.use('/*', serveStatic({ root: './public' }));
+app.use('/*', ...pageFiles('./public'));
 
 const server = serve({ fetch: app.fetch, port: PORT, hostname: HOST }, () => console.log(`lightsout-web: http://${HOST}:${PORT}`));
 

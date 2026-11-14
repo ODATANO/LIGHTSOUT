@@ -203,6 +203,10 @@ h4 { margin: 20px 0 8px; color: var(--muted); font: 500 11px var(--mono); letter
 
 .starts { display: grid; gap: 14px; }
 .starts > .note { margin: 0; }
+/* The bot check takes room only while its widget is shown. */
+.human { width: min(100%, 340px); }
+.human:empty { display: none; }
+.starts > .human { justify-self: end; }
 .start { display: flex; flex-wrap: wrap; align-items: center; gap: 16px 20px; }
 .start + .start { padding-top: 14px; border-top: 1px solid var(--line); }
 .start-text { flex: 1; min-width: 0; }

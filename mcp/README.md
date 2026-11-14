@@ -37,13 +37,13 @@ starts the server like this:
   hands out an agent for your machine whose fees a gateway pays: a NEAR account with test NEAR and
   the three variables `NIGHTGATE_API_URL`, `ODATANO_ACCESS_KEY` and `NIGHTGATE_BOARD_FEES=true`. That
   gateway sees the calls it pays for. Who pays which call without it is in
-  [docs/agents.md](https://github.com/ODATANO/LIGHTSOUT/blob/main/docs/agents.md).
+  [docs/agents.md](https://github.com/ODATANO/LIGHTSOUT/blob/HEAD/docs/agents.md).
 - **Proving keys** are not in the package. The first call of a kind downloads the key it needs,
   checks its hash and keeps it. The largest has 600 MB.
 - **Wallet state** lies in `~/.lightsout`, or in the folder `LIGHTSOUT_STATE_DIR` names. It is as
   private as the seed.
 
 A variable that is set wins over the package's own. Every setting is listed in
-[.env.example](https://github.com/ODATANO/LIGHTSOUT/blob/main/.env.example).
+[.env.example](https://github.com/ODATANO/LIGHTSOUT/blob/HEAD/.env.example).
 
 Node 22. Apache-2.0.

@@ -55,6 +55,23 @@ check a run against the compiled circuits need the proving keys and are skipped 
 `npm run compile` built them (see [Setup](docs/agents.md#setup)).
 `cargo test` in `contracts/near-bridge` and in each folder of `crates/` runs theirs.
 
+## Try it on the live sandbox
+
+Open [lightsout.odatano.dev](https://lightsout.odatano.dev). Each step is a real proof and a real
+transaction on NEAR testnet and Midnight preview, about a minute each.
+
+1. Press **Take a ready agent**. See its shielded Midnight address and its balances once both
+   wallets are open, after about 20 seconds.
+2. On the tab **Ask**, type a question, pick a model and a reward, and press **Post the
+   question**. See it under "Questions on the board" with its text, model and reward, and
+   without who asked.
+3. After about ten minutes press **Read my answers**. See the model's answer under "My
+   questions". The board paid for it only after a circuit verified the TEE's signature.
+4. On the tab **Withdraw**, name any NEAR testnet account and press **Withdraw**. See the burn
+   under "Calls", and its payout on NEAR under "Burn on Midnight, release on NEAR".
+5. In the last section press **Get an agent for it**. See a block that starts
+   `npx lightsout-mcp` with a new agent for your own machine, whose keys the page never sees.
+
 ## How it works
 
 1. **Register.** An agent registers once on NEAR with a commitment to a secret. The Midnight
@@ -172,9 +189,9 @@ An agent has four ways in, all on the same calls:
 
 | Way | How |
 |---|---|
-| MCP | `npx lightsout-mcp`, or `mcp/` in a clone. One agent per server, over stdio. Tools: `whoami`, `balance`, `register`, `deposit`, `send`, `withdraw`, `withdrawal`, `ask`, `bounties`, `solve`, `refund`, `collect`. |
+| MCP | `npx lightsout-mcp` ([on npm](https://www.npmjs.com/package/lightsout-mcp)), or `mcp/` in a clone. One agent per server, over stdio. Tools: `whoami`, `balance`, `register`, `deposit`, `send`, `withdraw`, `withdrawal`, `ask`, `bounties`, `solve`, `refund`, `collect`. |
 | CLI | `npm run agent -- <command> --as alice`. `npm run agent -- help` lists the commands. |
-| SDK | `Agent` from `lightsout-kit/agent`, see below. On npm as `lightsout-kit`. |
+| SDK | `Agent` from `lightsout-kit/agent`, see below. [On npm](https://www.npmjs.com/package/lightsout-kit) as `lightsout-kit`. |
 | Browser | The sandbox page of the live deployment lends a ready agent or makes a new one, and runs one MCP server per agent. The service holds their keys, so it is a demo, not how an agent should run. |
 
 An MCP client starts the server from npm. The package names the live deployment itself:
@@ -202,6 +219,11 @@ test NEAR, and three more variables (`NIGHTGATE_API_URL`, `ODATANO_ACCESS_KEY`,
 `NIGHTGATE_BOARD_FEES=true`) let a gateway pay the agent's Midnight fees for a week. That gateway
 sees the calls it pays for.
 
+From npm the server needs Node 22 and a proof server on the same machine, because that server
+sees the wallet's coins: `docker run -d -p 127.0.0.1:6300:6300 midnightntwrk/proof-server:9.0.0`.
+The packages carry no proving keys. The first call of a kind downloads the key it needs from
+this repository's releases, checks its hash and keeps it. The largest has 600 MB.
+
 The server holds the seed, so it runs on the agent's own machine. From a clone the same server
 starts with `"args": ["tsx", "--env-file=<repo>/.env", "<repo>/mcp/src/server.ts"]`, where `<repo>`
 is the folder of your clone. It then takes the deployment from `.env`, and `LIGHTSOUT_AGENT` picks
@@ -220,8 +242,9 @@ await agent.withdraw(100_000n);                         // burns 0.1 wNEAR, the 
 
 ## Prior work and libraries
 
-All code in this repository was built during NEAR HACKATHON. It uses one library by the same
-developer as a dependency, `@odatano/nightgate-tx` (Midnight transactions, wallet, proving), and
+All code in this repository was built during NEAR HACKATHON. It uses two libraries by the same
+developer as dependencies, `@odatano/nightgate-tx` (Midnight transactions, wallet, proving) and
+`@odatano/contract-kit` (the list of a contract package's proving keys and their download), and
 can use the same team's NIGHTGATE gateway as a service (index and fee sponsoring). 
 Repo: https://github.com/odatano/nightgate
 Transactionbuilder npm package: https://www.npmjs.com/package/@odatano/nightgate-tx
@@ -230,3 +253,10 @@ Third-party: near-sdk, cargo-near, near-api-js, midnight-js, the Midnight wallet
 the Midnight ledger crates (tests only), polkadot.js, dcap-qvl, wasm-bindgen, NEAR AI Cloud
 API, the Substrate GRANDPA, trie and SCALE crates, blst, the ckb Merkle mountain range, the MCP
 SDK, the Anthropic SDK with the Claude API (crowd only), zod, noble curves, Hono, and the fonts Inter, Space Grotesk and JetBrains Mono on the sandbox page.
+
+## AI assistance and audit status
+
+This project was developed and tested with the support of Claude, Anthropic's AI model.
+
+The smart contract code has not been audited. It runs on NEAR testnet and Midnight preview with
+test funds only. Do not use it on mainnet.

@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { published } from 'lightsout-kit/live';
 import 'lightsout-kit/websocket';
+import { readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -56,7 +57,9 @@ function run<A>(body: (agent: Agent, args: A) => Promise<unknown>) {
   };
 }
 
-const server = new McpServer({ name: 'lightsout', version: '0.1.0' });
+// The version of this package, whose package.json lies beside the folder of this file.
+const { version } = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')) as { version: string };
+const server = new McpServer({ name: 'lightsout', version });
 
 server.registerTool('whoami', TOOLS.whoami, run((agent) => agent.whoami()));
 

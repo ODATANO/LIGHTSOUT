@@ -1,4 +1,5 @@
 // The sandbox page. It shows the agent's own calls beside what the contracts show to everyone.
+import { humanCheck } from './human.js';
 import { newNearKey, newSeed } from './near-key.js';
 
 const $ = (id) => document.getElementById(id);
@@ -475,8 +476,22 @@ async function startAgent(fromZero = false) {
   if (agent || starting) return;
   starting = true;
   for (const id of ['start-button', 'fresh-button']) $(id).disabled = true;
+  // An agent from zero is paid by the faucet, which a deployment can put behind a bot check.
+  let check;
+  if (fromZero && seen?.humanCheck) {
+    $('start-note').textContent = 'Checking that you are no bot…';
+    try {
+      check = await humanCheck(seen.humanCheck, $('start-human'));
+    } catch (e) {
+      starting = false;
+      $('start-note').textContent = e.message;
+      if (seen) renderStart(seen);
+      return;
+    }
+  }
   $('start-note').textContent = 'Getting an agent…';
-  const { status, data } = await api('/api/session', { fresh: fromZero });
+  const { status, data } = await api('/api/session', { fresh: fromZero, human: check?.token });
+  check?.remove();
   starting = false;
   if (status !== 200) {
     $('start-note').textContent = data.error ?? 'No agent right now.';
@@ -507,8 +522,18 @@ async function makeOwnAgent() {
   } catch {
     return stop('This browser cannot make an Ed25519 key. A current Chrome, Edge, Firefox or Safari can.');
   }
+  let check;
+  if (seen?.humanCheck) {
+    $('own-note').textContent = 'Checking that you are no bot…';
+    try {
+      check = await humanCheck(seen.humanCheck, $('own-human'));
+    } catch (e) {
+      return stop(e.message);
+    }
+  }
   $('own-note').textContent = 'Paying the account and getting its fee key. This takes up to a minute.';
-  const { status, data } = await api('/api/own-agent', { account: own.account }, OWN_TIMEOUT_MS);
+  const { status, data } = await api('/api/own-agent', { account: own.account, human: check?.token }, OWN_TIMEOUT_MS);
+  check?.remove();
   if (status !== 200) return stop(data.error ?? 'The agent could not be made.');
   ownState = 'done';
   const env = {
