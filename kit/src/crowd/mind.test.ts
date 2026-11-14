@@ -18,6 +18,7 @@ const view = (over: Partial<View> = {}): View => ({
   onBoard: [],
   today: { ask: 0, send: 0, withdraw: 0, deposit: 0 },
   may: { ask: true, send: true, withdraw: true, deposit: true },
+  due: ['withdraw', 'deposit', 'ask', 'send'],
   rewards: ['0.01', '0.02', '0.05'],
   ...over,
 });

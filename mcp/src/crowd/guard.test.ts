@@ -174,6 +174,7 @@ test('what the limits allow is told before the turn', async () => {
     today: { ask: 0, send: 0, withdraw: 0, deposit: 0 },
     left_today: PER_DAY,
     may: { ask: true, send: false, withdraw: false, deposit: false },
+    due: ['ask'],
     barred: { send: 'grace keeps 0.3 wNEAR for questions', withdraw: 'grace keeps 0.3 wNEAR for questions', deposit: 'the bridge takes no new locks now' },
     ask: { rewards: REWARDS, models: [DEFAULT_MODEL], max_tokens: 64 },
     send: { to: { heidi: HEIDI, ivan: IVAN }, at_most: '0.05' },

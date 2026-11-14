@@ -10,6 +10,8 @@ import type { Action, View } from './mind.js';
 
 export type Act = Exclude<Action, 'wait'>;
 export const ACTS: readonly Act[] = ['ask', 'send', 'withdraw', 'deposit'];
+// The order of two actions that used the same part of their limits: the bridge first.
+const BRIDGE_FIRST: readonly Act[] = ['withdraw', 'deposit', 'ask', 'send'];
 
 /** What one agent does at most in a UTC day. The board takes 32 calls a day from a member. */
 export const PER_DAY: Record<Act, number> = { ask: 12, send: 8, withdraw: 16, deposit: 16 };
@@ -56,6 +58,11 @@ export async function todayOf(counts: DayCounts, name: string): Promise<Record<A
   return today;
 }
 
+/** The possible actions, first the one that used the smallest part of its day's limit. */
+export function dueOf(today: Record<Act, number>, may: Record<Act, boolean>): Act[] {
+  return BRIDGE_FIRST.filter((act) => may[act]).sort((a, b) => today[a] * PER_DAY[b] - today[b] * PER_DAY[a]);
+}
+
 /** Why the day's counts or the agent's funds rule an action out now. An action without an entry is possible. */
 export function barred(sight: Sight, today: Record<Act, number>, rewards: readonly string[]): Partial<Record<Act, string>> {
   const { name, wnear, near, lock } = sight;
@@ -87,6 +94,7 @@ export function barred(sight: Sight, today: Record<Act, number>, rewards: readon
 /** The view `sight` gives its agent. `nowSeconds` is Unix time. */
 export function viewOf(sight: Sight, today: Record<Act, number>, rewards: readonly string[], nowSeconds = Date.now() / 1000): View {
   const bars = barred(sight, today, rewards);
+  const may = { ask: !bars.ask, send: !bars.send, withdraw: !bars.withdraw, deposit: !bars.deposit };
   return {
     name: sight.name,
     wnear: nearOf(sight.wnear),
@@ -96,7 +104,8 @@ export function viewOf(sight: Sight, today: Record<Act, number>, rewards: readon
     recent: sight.recent.slice(-RECENT),
     onBoard: sight.bounties.flatMap((b) => (b.prompt ? [b.prompt] : [])),
     today,
-    may: { ask: !bars.ask, send: !bars.send, withdraw: !bars.withdraw, deposit: !bars.deposit },
+    may,
+    due: dueOf(today, may),
     rewards: [...rewards],
   };
 }

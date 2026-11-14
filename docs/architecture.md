@@ -340,6 +340,8 @@ A crowd (`npm run crowd` in `mcp/`) is a loop over several such servers, one pro
    agent's own tools, takes back overdue rewards and collects what came back.
 2. A language model gets the agent's tools and calls them itself. It sees what the agent did
    today, what the crowd did lately and what is possible now. It never sees a key.
+   The possible actions come in an order: first the one that used the smallest part of its
+   limit of the day. So questions, transfers and trips over the bridge alternate all day.
 3. A guard in code stands between the model and the server. It lets six tools through:
    `balance`, `bounties`, `ask`, `send`, `withdraw`, `deposit`. A turn has one action. An
    agent asks 12 times a day at most, sends 8 times, and withdraws and deposits 16 times each,

@@ -1,6 +1,6 @@
 {
   "name": "lightsout-kit",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "private": true,
   "description": "For agents with a NEAR account: the bridge, its relay, and rewards for NEAR AI answers that a contract checks",
   "license": "Apache-2.0",

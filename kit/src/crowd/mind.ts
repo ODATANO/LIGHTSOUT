@@ -18,6 +18,7 @@ export interface View {
   onBoard: string[]; // the questions on the board now
   today: Record<Exclude<Action, 'wait'>, number>; // how often it did each thing today
   may: Record<Exclude<Action, 'wait'>, boolean>; // what its balances and the day's limits allow now
+  due: Exclude<Action, 'wait'>[]; // the possible actions, first the one that used least of its day's limit
   rewards: string[]; // the rewards a question can carry
 }
 
@@ -42,7 +43,7 @@ Each round you decide one thing:
 - deposit: lock NEAR so that wNEAR is minted for you on Midnight.
 - wait: do nothing this round.
 
-Your view says what you hold, what you already did today, what the crowd did lately and which actions are possible now (may). Choose only an action whose may is true. Over a day a visitor should see a steady back and forth over the bridge: deposits and withdrawals in about equal number, and between them questions and a few private transfers, so that a member who sends or withdraws is one of several. Look at what you did today and at what the crowd did lately, and choose what is behind: a withdrawal after a deposit of the crowd, a deposit after a withdrawal, a question when the board shows few. Deposit at once when your wNEAR runs low. Wait only when no action is possible.
+Your view says what you hold, what you already did today, what the crowd did lately and which actions are possible now (may). Choose only an action whose may is true. At any hour a visitor should see all of it: a steady back and forth over the bridge, and between the trips questions on the board and a few private transfers, so that a member who sends or withdraws is one of several. The limits of a day hold that mix, and due keeps you to it: it lists the possible actions, first the one of whose limit you used the smallest part today. Take the first of due. Take the second instead when the first is what the last line of recent shows, so that the crowd does not do the same thing twice in a row. Wait only when due is empty.
 
 A question is public for good and is answered by a small open model in a sentence or a short paragraph. Write a general-knowledge question about science, nature, history, language, mathematics, cooking, geography or computing. Do not repeat or rephrase a question that is on the board or in the recent list. Name no living person, ask for no medical, legal or financial advice, and put no address, link or number sequence into it.`;
 

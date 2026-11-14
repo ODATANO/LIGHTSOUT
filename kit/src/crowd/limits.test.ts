@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import { test } from 'node:test';
 import { unitsOf } from '../codec.js';
 import { DayCounts } from './counts.js';
-import { barred, nearOfLock, PER_DAY, REWARDS, type Sight, smallestLock, todayOf, viewOf } from './limits.js';
+import { type Act, barred, dueOf, nearOfLock, PER_DAY, REWARDS, type Sight, smallestLock, todayOf, viewOf } from './limits.js';
 
 const none = { ask: 0, send: 0, withdraw: 0, deposit: 0 };
 const sight = (over: Partial<Sight> = {}): Sight => ({ name: 'grace', wnear: unitsOf('0.8'), near: 6n * 10n ** 23n, bounties: [], others: ['heidi'], recent: [], lock: 10n ** 23n, ...over });
@@ -53,8 +53,34 @@ test('the view shows the agent\'s open questions, the board and what it did toda
     onBoard: ['Why do cats purr?', 'What causes the tides?', 'Why are there time zones?'],
     today,
     may: { ask: true, send: true, withdraw: false, deposit: true },
+    due: ['deposit', 'send', 'ask'],
     rewards: ['0.02', '0.05'],
   });
+});
+
+test('due names the possible actions, first the one that used least of its limit', () => {
+  const all = { ask: true, send: true, withdraw: true, deposit: true };
+  assert.deepEqual(dueOf(none, all), ['withdraw', 'deposit', 'ask', 'send']);
+  assert.deepEqual(dueOf({ ask: 0, send: 0, withdraw: 5, deposit: 4 }, all), ['ask', 'send', 'deposit', 'withdraw']);
+  // A quarter of every limit is used: the bridge comes first.
+  assert.deepEqual(dueOf({ ask: 3, send: 2, withdraw: 4, deposit: 4 }, all), ['withdraw', 'deposit', 'ask', 'send']);
+  assert.deepEqual(dueOf({ ask: 12, send: 6, withdraw: 5, deposit: 3 }, { ...all, ask: false }), ['deposit', 'withdraw', 'send']);
+  assert.deepEqual(dueOf(PER_DAY, { ask: false, send: false, withdraw: false, deposit: false }), []);
+});
+
+test('an agent that takes what is due first spreads every action over its day', () => {
+  const today = { ...none };
+  const done: Act[] = [];
+  for (;;) {
+    const may = { ask: today.ask < PER_DAY.ask, send: today.send < PER_DAY.send, withdraw: today.withdraw < PER_DAY.withdraw, deposit: today.deposit < PER_DAY.deposit };
+    const [next] = dueOf(today, may);
+    if (!next) break;
+    today[next]++;
+    done.push(next);
+  }
+  assert.deepEqual(today, PER_DAY);
+  // Any eight turns in a row hold a question, a transfer, a withdrawal and a deposit.
+  for (let i = 0; i + 8 <= done.length; i++) assert.equal(new Set(done.slice(i, i + 8)).size, 4, `turns ${i} to ${i + 7}`);
 });
 
 test('a deposit takes the bridge\'s smallest lock while it takes locks', () => {

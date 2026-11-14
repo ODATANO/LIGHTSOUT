@@ -50,6 +50,7 @@ export interface Allowed {
   today: Record<Act, number>;
   left_today: Record<Act, number>;
   may: Record<Act, boolean>;
+  due: Act[]; // the possible actions, first the one that used least of its day's limit
   barred: Partial<Record<Act, string>>; // why an action is not possible now
   ask: { rewards: readonly string[]; models: readonly string[]; max_tokens: number };
   send: { to: Record<string, string>; at_most: string }; // wNEAR
@@ -147,12 +148,13 @@ export class Guard implements MCPClientLike {
   /** What the limits leave this turn, for whoever decides in it. */
   allows(): Allowed {
     const { sight, addresses, rewards, models } = this.opts;
-    const { today, may } = this.view;
+    const { today, may, due } = this.view;
     const left = (act: Act): number => Math.max(0, PER_DAY[act] - today[act]);
     return {
       today,
       left_today: { ask: left('ask'), send: left('send'), withdraw: left('withdraw'), deposit: left('deposit') },
       may,
+      due,
       barred: this.bars,
       ask: { rewards, models, max_tokens: ANSWER_TOKENS },
       send: { to: addresses, at_most: nearOf(SEND_AT_MOST) },
