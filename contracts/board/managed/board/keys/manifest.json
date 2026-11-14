@@ -1,0 +1,141 @@
+{
+  "version": 1,
+  "prover": {
+    "answer_16": {
+      "sha256": "ea699c65ba895bc310bd32d4e3930f12f1afe5a5f4bef227d89bf91b2b32330f",
+      "bytes": 604119952
+    },
+    "answer_24": {
+      "sha256": "4c6112c5d5b9a94ec32283e21abb762f6a81303d23dd762e9328037854606a51",
+      "bytes": 604120200
+    },
+    "answer_36": {
+      "sha256": "027695aab04f2e7ca77eab40e0a07b83e5d851408827e0aaaa552cfb1fccc3d0",
+      "bytes": 604121121
+    },
+    "forget_bounty": {
+      "sha256": "5eea2fde1df0d23b4c12c891a634ba8e294677fdea43373614765b8448e4b49c",
+      "bytes": 529291
+    },
+    "forget_drop": {
+      "sha256": "03354fd968c319827acc1b4b79e508d634ee9abe1c2029e205fb03cce0e3c26f",
+      "bytes": 224965
+    },
+    "forget_marks": {
+      "sha256": "44590442366fe2d5f51cd804442ef02c628230a4ea8c50f118cb21a026c18931",
+      "bytes": 113890
+    },
+    "post_bounty": {
+      "sha256": "e5c5c1efebbff650a0b6570c200c1e83c64174b3bf55fb004d49bc04de287334",
+      "bytes": 197153602
+    },
+    "refund_bounty": {
+      "sha256": "a5c647fa1bc5ea7a9b4dfdbc57f11ec9f6b776930ab1cce9434a352c9511f295",
+      "bytes": 49293169
+    },
+    "seal_begin": {
+      "sha256": "a82a4736d527080490a29ff32d88006cb94702b4410fd9c5ed10ed9ee0b3c325",
+      "bytes": 90195056
+    },
+    "seal_block": {
+      "sha256": "2835cdb4a316eb77b1574d8c0bbcd29071ce51f6b1f692be3b38d6b21878a83c",
+      "bytes": 116117055
+    },
+    "seal_finish": {
+      "sha256": "d54f13444531f055f7d1d7b77dcb4e5120a460cefc4776d78a2cd3990f560d65",
+      "bytes": 183261828
+    }
+  },
+  "verifier": {
+    "answer_16": {
+      "sha256": "126ead8cdc77cd8ea4bb89f533d597c1e4e384ac67e3baa38d27d8ff0aa2c65d",
+      "bytes": 3513
+    },
+    "answer_24": {
+      "sha256": "58b395a1f1ba9dd8d03d91c4aeac89836df451cea23f15e771d1e3d62c4ceac4",
+      "bytes": 3513
+    },
+    "answer_36": {
+      "sha256": "844965531724df5f5f5dbcb9b3cdef684a83eef576777a9148842cc3b425baf1",
+      "bytes": 3513
+    },
+    "forget_bounty": {
+      "sha256": "b0a24374ca060aa9f01238bf65f65dd142a134386c9cefd3c9f3eb27e646048a",
+      "bytes": 1593
+    },
+    "forget_drop": {
+      "sha256": "3d094559385d012121aeff069edb2d1b6dd89b0ecabc14b99712f0971916f8d4",
+      "bytes": 1353
+    },
+    "forget_marks": {
+      "sha256": "e11aacfac4fe0090bd97ec1927cfd064eeb78410aa362df90ba04599074b4aab",
+      "bytes": 1353
+    },
+    "post_bounty": {
+      "sha256": "4ee5257b3dda14534b11d8e3187b936a78dd79fbeb711d93843180926ea4448b",
+      "bytes": 2313
+    },
+    "refund_bounty": {
+      "sha256": "7d7f0211678799aaa734d2a3fb8fad1b716f0f36adf488d5be6131bab0d6f49a",
+      "bytes": 2313
+    },
+    "seal_begin": {
+      "sha256": "9d10dc34d3db284e8c68f3f60f7b8fc716b4f83e5ee29dc4585dca67c7501c8b",
+      "bytes": 2121
+    },
+    "seal_block": {
+      "sha256": "5a1b417e4dd1ff95dbe4b5359fc9b7cca22c0f19d93aa99ec2b7e389bce5fade",
+      "bytes": 1353
+    },
+    "seal_finish": {
+      "sha256": "80560d4bf87b02221069c66053e41edb71dadbd8b23a3b4b6fb8f4c8ea0c4bd0",
+      "bytes": 2121
+    }
+  },
+  "zkir": {
+    "answer_16": {
+      "sha256": "b06b5cea2ec91e52a18d36510d5a5ed0bab35ff2ecae829cd12b9ba082cf905c",
+      "bytes": 132906
+    },
+    "answer_24": {
+      "sha256": "85ad6c422731871fe98e3a855e439d6f877362ec3b0392ab3924c3041f373685",
+      "bytes": 133154
+    },
+    "answer_36": {
+      "sha256": "03d7836c2a7912d26e8a84cff999eb77ca45ceb290519ed0180591717d127bbc",
+      "bytes": 134075
+    },
+    "forget_bounty": {
+      "sha256": "2e2c2957127a9edd20135e93f4c8ca3ad2d82690be8d9d5ae322c16cab5ec627",
+      "bytes": 1735
+    },
+    "forget_drop": {
+      "sha256": "d6864b85778b0a3968cf0bf03aabc6e8809d8fe486b62414469400d3e581d78d",
+      "bytes": 1013
+    },
+    "forget_marks": {
+      "sha256": "6513c8a3cf0d760f3a17a18b9c457fe6c75417011625992d6b2fdf9b2ef497b3",
+      "bytes": 530
+    },
+    "post_bounty": {
+      "sha256": "d46db8b846a458e781736421e1974aec54c0b9790251c00befa81fe748731855",
+      "bytes": 16544
+    },
+    "refund_bounty": {
+      "sha256": "66b31a382b43d2c06c596250270cc9d1a686120424cc35d6faa98dfa3da57b1f",
+      "bytes": 5329
+    },
+    "seal_begin": {
+      "sha256": "b432986859df406c08de6d622a9b630d4f4a74799b3a1346f843b650e46aba96",
+      "bytes": 13152
+    },
+    "seal_block": {
+      "sha256": "cc70e145a6ff3bcde39c7dabfdcac84db8d083b92480d38adc31089977e44381",
+      "bytes": 2868077
+    },
+    "seal_finish": {
+      "sha256": "e9e2bfed09f37f38f78944d24ad2a0b4b61fe8f65f71633e3671cecb065643f9",
+      "bytes": 2902386
+    }
+  }
+}

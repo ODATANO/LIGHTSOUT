@@ -1,0 +1,29 @@
+{
+  "name": "board",
+  "role": "board",
+  "privateStateId": "boardPrivateState",
+  "artifactPath": "managed/board/contract/index.js",
+  "zkConfigPath": "managed/board",
+  "circuits": [
+    "answer_16",
+    "answer_24",
+    "answer_36",
+    "forget_bounty",
+    "forget_drop",
+    "forget_marks",
+    "post_bounty",
+    "refund_bounty",
+    "seal_begin",
+    "seal_block",
+    "seal_finish"
+  ],
+  "pureCircuits": [
+    "bountyId"
+  ],
+  "compactCompiler": "0.36.0",
+  "compactRuntime": "0.21.0",
+  "languageVersion": "0.28.0",
+  "digest": "a2cabb314e93d2bd4d269d514b3d6f7c5eafa41391bd7db35f9be2e23e4a8bf2",
+  "zkAssetUrl": "https://github.com/ODATANO/LIGHTSOUT/releases/download/board-v0.1.0",
+  "zkAssetLayout": "flat"
+}

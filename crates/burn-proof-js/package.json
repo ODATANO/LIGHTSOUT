@@ -1,13 +1,28 @@
 {
   "name": "lightsout-burn-proof",
   "version": "0.1.0",
-  "private": true,
   "description": "The extrinsic proof and the bridge logs of a Midnight transaction, built in Rust for Node",
   "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ODATANO/LIGHTSOUT.git",
+    "directory": "crates/burn-proof-js"
+  },
+  "homepage": "https://github.com/ODATANO/LIGHTSOUT#readme",
+  "keywords": [
+    "near",
+    "midnight",
+    "wasm"
+  ],
   "main": "pkg/burn_proof_js.js",
   "types": "pkg/burn_proof_js.d.ts",
-  "files": ["pkg"],
+  "files": [
+    "pkg"
+  ],
   "scripts": {
     "build": "bash build.sh"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

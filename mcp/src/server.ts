@@ -1,6 +1,8 @@
 #!/usr/bin/env node
+import { published } from 'lightsout-kit/live';
 import 'lightsout-kit/websocket';
-import { dirname, resolve } from 'node:path';
+import { homedir } from 'node:os';
+import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
@@ -10,7 +12,7 @@ import { Agent } from 'lightsout-kit/agent';
 import { unitsOf } from 'lightsout-kit/codec';
 import { deposit } from 'lightsout-kit/deposit';
 import { env } from 'lightsout-kit/env';
-import { join } from 'lightsout-kit/join';
+import { join as joinBridge } from 'lightsout-kit/join';
 import { reasonOf } from 'lightsout-kit/reason';
 import { agentFromEnv } from 'lightsout-kit/roles';
 import { shownBalance, shownBounties, shownCollected, shownWithdrawal } from 'lightsout-kit/shown';
@@ -20,7 +22,8 @@ import { text, TOOLS } from './tools.js';
 console.log = console.error;
 console.info = console.error;
 
-const KIT = resolve(dirname(fileURLToPath(import.meta.url)), '../../kit');
+// A checkout keeps the wallet state in the kit's folder, the package from npm in the home folder.
+const STATE = published ? join(homedir(), '.lightsout') : resolve(dirname(fileURLToPath(import.meta.url)), '../../kit/.wallet');
 
 // Where the agent's progress lines go while a tool call runs, beside stderr.
 let tell: ((line: string) => void) | undefined;
@@ -30,7 +33,7 @@ const say = (line: string): void => {
 };
 
 // Connects at once and opens the wallets beside it, so that a client does not time out on start.
-const opening = Agent.open(agentFromEnv(resolve(KIT, '.wallet')), { say });
+const opening = Agent.open(agentFromEnv(STATE), { say });
 opening.catch((e: unknown) => console.error('lightsout-mcp: the agent did not open:', e));
 
 /**
@@ -57,7 +60,7 @@ const server = new McpServer({ name: 'lightsout', version: '0.1.0' });
 
 server.registerTool('whoami', TOOLS.whoami, run((agent) => agent.whoami()));
 
-server.registerTool('register', TOOLS.register, run((agent, a: { deposit?: string }) => join(agent.identity, env('MIDNIGHT_BRIDGE'), say, a.deposit ? { near: a.deposit, address: agent.address } : undefined)));
+server.registerTool('register', TOOLS.register, run((agent, a: { deposit?: string }) => joinBridge(agent.identity, env('MIDNIGHT_BRIDGE'), say, a.deposit ? { near: a.deposit, address: agent.address } : undefined)));
 
 server.registerTool('balance', TOOLS.balance, run(async (agent) => shownBalance(await agent.balance())));
 

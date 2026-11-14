@@ -1,12 +1,9 @@
 import { randomBytes } from 'node:crypto';
-import { dirname, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { CompiledContract, type Contract as CompactContract } from '@midnight-ntwrk/compact-js';
 import { type ChargedState, ContractState, type Module, type StateValue } from '@midnight-ntwrk/compact-runtime';
 import { type CallTxOptionsBase, createUnprovenCallTx, submitTx, type SubmitTxProviders } from '@midnight-ntwrk/midnight-js-contracts';
 import { httpClientProofProvider } from '@midnight-ntwrk/midnight-js-http-client-proof-provider';
 import { type IndexerPublicDataProvider, indexerPublicDataProvider } from '@midnight-ntwrk/midnight-js-indexer-public-data-provider';
-import { NodeZkConfigProvider } from '@midnight-ntwrk/midnight-js-node-zk-config-provider';
 import { createLedger9MidnightProvider, createLedger9WalletProvider, type ProofProvider, SucceedEntirely, ZKConfigRegistry } from '@midnight-ntwrk/midnight-js-types';
 import { type ContractOperation, ContractState as ChainContractState, type FinalizedTransaction, Transaction } from '@midnightntwrk/ledger-v9';
 import type { UnboundTx } from '@midnightntwrk/wallet-sdk-abstractions';
@@ -16,6 +13,7 @@ import { Contract, ledger, type Ledger } from 'lightsout-board';
 import type { ShieldedKeys } from '../codec.js';
 import { FeeWallet, type Wallet } from '../fees.js';
 import { FailedInBlock, mayStillLand, outdated } from '../not-landed.js';
+import { zkConfigDirOf, zkConfigOf } from '../prover-keys.js';
 import { epochOf, type MemberTree, type Membership } from './member.js';
 import { AFTER_A_BOUNTY, AFTER_ANY_CALL, type BuiltCall, withByteReserve } from './reserve.js';
 import { boardWitnesses, type Inputs } from './witnesses.js';
@@ -57,11 +55,6 @@ export interface Landed {
   proveMs: number; // proving the call and the calls it made
 }
 
-/** The directory with keys/ and zkir/ of an installed contract package. */
-export function zkConfigDirOf(packageName: string): string {
-  return resolve(dirname(fileURLToPath(import.meta.resolve(packageName))), '..');
-}
-
 /** What the last transaction of a wallet took: its proving time and the coins set aside for it. */
 interface Trace {
   proveMs: number;
@@ -87,9 +80,9 @@ export async function reach(opts: Pick<BoardOptions, 'wallet' | 'submit'> & { br
   const own = new FeeWallet(wallet);
   const submit = opts.submit ?? ((finalizedTxB64: string) => own.submit(finalizedTxB64));
   const zkDir = opts.zkDir ?? zkConfigDirOf('lightsout-board');
-  const zkConfigProvider = new NodeZkConfigProvider<Circuit>(zkDir);
+  const zkConfigProvider = zkConfigOf<Circuit>(zkDir);
   // The prover finds the keys of a call by the contract it is on, so the callee's are listed too.
-  const callees = bridge ? [new NodeZkConfigProvider(bridge.zkConfigDir)] : [];
+  const callees = bridge ? [zkConfigOf(bridge.zkConfigDir)] : [];
   const prover = httpClientProofProvider(proofServerUrl, new ZKConfigRegistry([zkConfigProvider, ...callees]), { timeout: PROOF_TIMEOUT_MS });
   const trace: Trace = { proveMs: 0, recipe: undefined };
   const proofProvider: ProofProvider = {

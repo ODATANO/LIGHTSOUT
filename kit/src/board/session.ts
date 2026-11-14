@@ -9,7 +9,8 @@ import { hold } from '../lock.js';
 import { memberSecret } from '../membership.js';
 import { type AgentIdentity, stateFileOf } from '../roles.js';
 import { type Book, type OwnDrop, readBook, writeBook } from './book.js';
-import { Board, zkConfigDirOf } from './calls.js';
+import { Board } from './calls.js';
+import { zkConfigDirOf } from '../prover-keys.js';
 import { payoutSeed, refundSeed } from './trade.js';
 
 /** The board's address, from `MIDNIGHT_BOARD`. */

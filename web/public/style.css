@@ -409,6 +409,9 @@ p.sees + p, p.hides + p { margin-top: 10px; }
 .card.code { position: relative; display: grid; grid-template-columns: minmax(0, 320px) minmax(0, 1fr); grid-template-rows: auto 1fr; column-gap: 48px; padding: 28px 0; border-bottom: 1px solid var(--line); }
 .card.code .note { grid-column: 1; grid-row: 2; margin: 0; }
 .card.code pre { grid-column: 2; grid-row: 1 / span 2; align-self: start; margin: 0; padding: 14px 48px 14px 14px; border: 1px solid var(--line); border-radius: var(--radius-control); background: var(--inset); line-height: 1.6; overflow-x: auto; }
+.card.code .own { grid-column: 1; grid-row: 2; display: grid; gap: 14px; align-content: start; justify-items: start; }
+.card.code .own .note { grid-column: auto; grid-row: auto; }
+.card.code .own code { overflow-wrap: anywhere; }
 /* The copy button sits on the code it copies. */
 .card.code h3 .icon-btn { position: absolute; top: 36px; right: 8px; }
 

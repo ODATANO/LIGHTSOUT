@@ -10,6 +10,7 @@ import { bridgeId, callBridge, type NearLock, nearSource, PROVE_DEPOSIT, PROVE_G
 import { findReceipt } from './near-find.js';
 import { lockLine } from './near-prover.js';
 import { NotLanded } from './not-landed.js';
+import { headMover } from './relay-wait.js';
 
 // The steps of the bridge. Anyone can run each of them: none needs a key either contract trusts.
 
@@ -80,23 +81,24 @@ export interface Minter {
 }
 
 /**
- * Proves the lock that `receiptId` logged to the Midnight bridge, after moving the head past the
- * lock's block when needed. With `minter` it also mints, when the lock names that wallet.
+ * Proves the lock that `receiptId` logged to the Midnight bridge, once the head is past the
+ * lock's block. With `minter` it also mints, when the lock names that wallet.
  */
 export async function proveLock(builder: TxBuilder, bridge: string, lockId: bigint, receiptId: string, say: Say, minter?: Minter): Promise<'minted' | 'proven'> {
   const lock = await viewBridge<NearLock>('get_lock', { lock_id: lockId.toString() });
   if (!lock) throw new Error(`${bridgeId} has no lock ${lockId}`);
   const height = BigInt(lock.block_height);
+  const toHead = headMover((past) => moveHead(builder, bridge, past, say), say);
   for (let tries = 1; ; ) {
     const state = await readBridge(bridge);
     if (state.minted_locks.member(lockId)) return 'minted';
     if (state.tip.head.height <= height) {
-      await moveHead(builder, bridge, height, say);
+      await toHead(height);
       continue;
     }
     const proof = await nearSource.receiptProof(receiptId, await nearSource.hashAt(state.tip.head.height));
     if (state.tip.head.height <= outcomeBlock(proof)) {
-      await moveHead(builder, bridge, outcomeBlock(proof), say);
+      await toHead(outcomeBlock(proof));
       continue;
     }
     const calls = lockCalls(state, proof, minter?.keys);
@@ -120,22 +122,23 @@ export function registrationReceipt(account: string, registration: Registration)
 }
 
 /**
- * Proves the registration that `receiptId` logged to the Midnight bridge, after moving the head
- * past the registration's block when needed. Returns once the bridge has the index.
+ * Proves the registration that `receiptId` logged to the Midnight bridge, once the head is past
+ * the registration's block. Returns once the bridge has the index.
  */
 export async function proveRegistration(builder: TxBuilder, bridge: string, registration: Registration, receiptId: string, say: Say): Promise<void> {
   const index = BigInt(registration.index);
   const height = BigInt(registration.block_height);
+  const toHead = headMover((past) => moveHead(builder, bridge, past, say), say);
   for (let tries = 1; ; ) {
     const state = await readBridge(bridge);
     if (state.joined.member(index)) return;
     if (state.tip.head.height <= height) {
-      await moveHead(builder, bridge, height, say);
+      await toHead(height);
       continue;
     }
     const proof = await nearSource.receiptProof(receiptId, await nearSource.hashAt(state.tip.head.height));
     if (state.tip.head.height <= outcomeBlock(proof)) {
-      await moveHead(builder, bridge, outcomeBlock(proof), say);
+      await toHead(outcomeBlock(proof));
       continue;
     }
     try {

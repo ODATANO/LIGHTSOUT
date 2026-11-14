@@ -19,7 +19,8 @@ interface Guest {
 }
 
 const DAY_MS = 24 * 60 * 60_000;
-const STATE_DIR = process.env.LIGHTSOUT_STATE_DIR ?? resolve(dirname(fileURLToPath(import.meta.url)), '../../kit/.wallet');
+/** Where the page keeps what must outlast a restart, beside the wallets. */
+export const STATE_DIR = process.env.LIGHTSOUT_STATE_DIR ?? resolve(dirname(fileURLToPath(import.meta.url)), '../../kit/.wallet');
 
 // A guest has no NIGHT, so the gateway pays its board calls as well.
 const lendable = (guest: Guest): PoolAgent => ({

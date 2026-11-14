@@ -1,4 +1,6 @@
 // The sandbox page. It shows the agent's own calls beside what the contracts show to everyone.
+import { newNearKey, newSeed } from './near-key.js';
+
 const $ = (id) => document.getElementById(id);
 
 /** An element with properties and children. `text` sets its text, `on…` adds a listener. */
@@ -67,10 +69,10 @@ function toast(text, done = false) {
 
 const API_TIMEOUT_MS = 15_000;
 
-async function api(path, body) {
+async function api(path, body, timeoutMs = API_TIMEOUT_MS) {
   let answer;
   try {
-    const res = await fetch(path, { signal: AbortSignal.timeout(API_TIMEOUT_MS), ...(body === undefined ? {} : { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }) });
+    const res = await fetch(path, { signal: AbortSignal.timeout(timeoutMs), ...(body === undefined ? {} : { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }) });
     answer = { status: res.status, data: await res.json().catch(() => ({})) };
   } catch {
     answer = { status: 0, data: { error: 'The sandbox server does not answer.' } };
@@ -96,7 +98,7 @@ function copyButton(text, label = 'Copy') {
   const button = h('button', { class: 'icon-btn', type: 'button', title: label, 'aria-label': label }, icon('copy', 15));
   button.addEventListener('click', async () => {
     try {
-      await navigator.clipboard.writeText(text);
+      await navigator.clipboard.writeText(typeof text === 'function' ? text() : text);
     } catch {
       return toast('The browser did not allow copying.');
     }
@@ -485,6 +487,46 @@ async function startAgent(fromZero = false) {
   await pollJobs();
 }
 
+// An agent for the visitor's own machine. Its NEAR key and its seed are made here and shown once.
+const OWN_TIMEOUT_MS = 90_000;
+const ownNote = $('own-note').textContent;
+let own = null; // key and seed, kept until the server answered, so that a second try pays nothing twice
+let ownState = 'idle'; // idle, busy or done
+
+async function makeOwnAgent() {
+  const stop = (text) => {
+    ownState = 'idle';
+    $('own-button').disabled = false;
+    $('own-note').textContent = ownNote;
+    toast(text);
+  };
+  ownState = 'busy';
+  $('own-button').disabled = true;
+  try {
+    own ??= { ...(await newNearKey()), seed: newSeed() };
+  } catch {
+    return stop('This browser cannot make an Ed25519 key. A current Chrome, Edge, Firefox or Safari can.');
+  }
+  $('own-note').textContent = 'Paying the account and getting its fee key. This takes up to a minute.';
+  const { status, data } = await api('/api/own-agent', { account: own.account }, OWN_TIMEOUT_MS);
+  if (status !== 200) return stop(data.error ?? 'The agent could not be made.');
+  ownState = 'done';
+  const env = {
+    LIGHTSOUT_NAME: `guest-${own.account.slice(0, 6)}`,
+    LIGHTSOUT_NEAR_ACCOUNT_ID: own.account,
+    LIGHTSOUT_NEAR_PRIVATE_KEY: own.privateKey,
+    LIGHTSOUT_SEED_HEX: own.seed,
+    NIGHTGATE_API_URL: data.gateway,
+    ODATANO_ACCESS_KEY: data.key,
+    NIGHTGATE_BOARD_FEES: 'true',
+  };
+  $('own-config').textContent = JSON.stringify({ mcpServers: { lightsout: { command: 'npx', args: ['-y', 'lightsout-mcp'], env } } }, null, 2);
+  const paid = data.near ? `The faucet sent the account ${data.near} NEAR. ` : '';
+  const until = data.validUntil ? ` until ${new Date(data.validUntil).toLocaleDateString('en-GB', { day: 'numeric', month: 'long' })}` : '';
+  $('own-note').textContent = `Copy the block now. It is shown once, and the NEAR key and the seed exist only in this tab. ${paid}The gateway pays its Midnight fees${until}.`;
+  toast('Your agent is made. Copy its block.', true);
+}
+
 // Which of the two ways to start is open right now.
 function renderStart(data) {
   if (agent || starting) return;
@@ -752,6 +794,7 @@ function renderPublic(data) {
   $('live').classList.toggle('down', Boolean(data.error));
   for (const node of document.querySelectorAll('[data-least-reward]')) node.textContent = data.leastReward;
   renderStart(data);
+  $('own-button').disabled = ownState !== 'idle' || !data.ownAgents;
   if (!data.bridge || !data.board) {
     $('chain-note').textContent = data.error ? `Reading the chains failed: ${data.error}` : 'Reading both chains…';
     return;
@@ -791,7 +834,9 @@ async function pollPublic() {
   $('chain-note').textContent = seen ? `The server does not answer. This is what the chains showed at ${clock(seen.readAt)}.` : 'The server does not answer.';
 }
 
-for (const card of document.querySelectorAll('.card.code')) card.querySelector('h3').append(copyButton(card.querySelector('code').textContent, 'Copy'));
+// Read at the click: the block of an own agent is filled in after the page loaded.
+for (const card of document.querySelectorAll('.card.code')) card.querySelector('h3').append(copyButton(() => card.querySelector('pre code').textContent, 'Copy'));
+$('own-button').addEventListener('click', () => void makeOwnAgent());
 $('start-button').addEventListener('click', () => void startAgent(false));
 $('fresh-button').addEventListener('click', () => void startAgent(true));
 $('hero-start').addEventListener('click', () => $('sandbox').scrollIntoView({ behavior: 'smooth' }));

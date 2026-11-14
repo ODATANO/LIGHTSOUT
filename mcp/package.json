@@ -2,8 +2,21 @@
   "name": "lightsout-mcp",
   "version": "0.1.0",
   "private": true,
-  "description": "MCP server for one LIGHTSOUT agent: deposit NEAR, send wNEAR, withdraw to NEAR, ask a model for a reward, answer bounties. And a crowd of agents that Claude steers through it",
+  "description": "MCP server for one LIGHTSOUT agent: deposit NEAR, send wNEAR, withdraw to NEAR, ask a model for a reward, answer bounties",
   "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ODATANO/LIGHTSOUT.git",
+    "directory": "mcp"
+  },
+  "homepage": "https://github.com/ODATANO/LIGHTSOUT#readme",
+  "keywords": [
+    "mcp",
+    "near",
+    "midnight",
+    "bridge",
+    "agents"
+  ],
   "type": "module",
   "engines": {
     "node": ">=22"

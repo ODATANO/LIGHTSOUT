@@ -6,11 +6,11 @@ import { randomBytes } from 'node:crypto';
 import { keepFile, keptJson } from '../keep.js';
 import type { WalletState } from '@odatano/nightgate-tx/txbuilder';
 import * as bridgeModule from 'lightsout-midnight-bridge';
-import { zkConfigDirOf } from '../board/calls.js';
 import { deployBoard } from '../board/deploy.js';
 import { boardFeesViaGateway, network, submitFinalized, walletOptions, wrappedTokenType } from '../bridge.js';
 import { env } from '../env.js';
 import { openWallet, saveWallet } from '../fees.js';
+import { zkConfigDirOf } from '../prover-keys.js';
 import { say } from '../log.js';
 import { stateFileOf } from '../roles.js';
 

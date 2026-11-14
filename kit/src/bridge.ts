@@ -1,6 +1,4 @@
 import { createHash, randomBytes } from 'node:crypto';
-import { dirname, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { CompactTypeBytes, rawTokenType, transientHash } from '@midnight-ntwrk/compact-runtime';
 import { connect, NightgateJobError } from '@odatano/nightgate-tx';
 import { createTxBuilder, waitLanded, type BuiltTransaction, type CreateTxBuilderInput, type PreparedCall, type TxBuilder, type WalletState } from '@odatano/nightgate-tx/txbuilder';
@@ -13,6 +11,7 @@ import { coinSecretKey } from './keys.js';
 import { readFromNode } from './midnight-node.js';
 import { authFromEnv } from './nightgate-auth.js';
 import { FailedInBlock, mayStillLand, NotLanded, outdated, overTime } from './not-landed.js';
+import { provable, proverKeys, zkConfigDirOf } from './prover-keys.js';
 
 // Declared gas is bound into the proof. A Set insert that adds a trie level after another
 // transaction costs more than the ledger's own margin, so bridge calls ask for half as much
@@ -69,7 +68,7 @@ export function chain(): { api: NonNullable<typeof api>; indexerHttpUrl?: string
   return api ? { api, indexerHttpUrl: process.env.MIDNIGHT_INDEXER_HTTP_URL, indexerWsUrl: process.env.MIDNIGHT_INDEXER_WS_URL } : direct();
 }
 
-const zkConfigDir = resolve(dirname(fileURLToPath(import.meta.resolve('lightsout-midnight-bridge'))), '..');
+const zkConfigDir = zkConfigDirOf('lightsout-midnight-bridge');
 // The secret behind the producer list read this process begins. The bridge keeps the read under
 // the secret's hash, so only this process can continue it.
 let readSecret = randomBytes(32);
@@ -125,6 +124,8 @@ export async function openBridgeBuilder(seedHex: string, opts: BridgeBuilderOpti
     walletState: opts.walletState,
     shieldedWallet: opts.shieldedWallet,
     zkConfigDir,
+    // A proving key that is not on disk yet is downloaded before the call that needs it.
+    circuits: provable('lightsout-midnight-bridge'),
     contractClass: Contract,
     contractName: 'midnight-bridge',
   });
@@ -255,6 +256,7 @@ const SEND_TRIES = 5;
 
 /** Builds, proves and submits one call. A mint needs `seedHex`, the recipient's wallet seed. Returns the transaction's hash. */
 export async function send(builder: TxBuilder, bridge: string, call: Call, seedHex?: string): Promise<string> {
+  await proverKeys('lightsout-midnight-bridge', [call.circuit]);
   let headroom = true;
   for (let tries = 1; ; tries++) {
     const built = await builder.buildSponsorable({

@@ -5,6 +5,7 @@ import 'lightsout-kit/websocket';
 import { randomBytes } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
+import { resolve } from 'node:path';
 import { serve } from '@hono/node-server';
 import { getConnInfo } from '@hono/node-server/conninfo';
 import { serveStatic } from '@hono/node-server/serve-static';
@@ -19,9 +20,10 @@ import { nearBalance } from 'lightsout-kit/near';
 import { AgentProcess, type Outcome, TOOLS, type Tool } from './agents.js';
 import { checked, Refused } from './calls.js';
 import { Feed } from './feed.js';
-import { Guests } from './guests.js';
+import { Guests, STATE_DIR } from './guests.js';
 import { originOf, withOrigin } from './origin.js';
 import { Budget, Rate } from './limits.js';
+import { OwnAgents, type Redeemed } from './own.js';
 import { agentsOf, Pool, type PoolAgent } from './pool.js';
 
 const PORT = Number(process.env.DEMO_PORT ?? 8787);
@@ -32,6 +34,7 @@ const COOKIE = 'lightsout_session';
 const GONE_MS = 3 * 60_000;
 const IDLE_MS = 30 * 60_000;
 const SESSION_MS = 60 * 60_000;
+const DAY_MS = 24 * 60 * 60_000;
 const PROCESS_IDLE_MS = 10 * 60_000;
 const FEED_EVERY_MS = 20_000;
 const JOBS_KEPT = 40;
@@ -83,6 +86,13 @@ const pool = new Pool(agentsOf(), async (account) => Boolean(await registrationO
 // The faucet gives an agent from zero DEMO_FAUCET_NEAR, and makes at most DEMO_FAUCET_PER_DAY new ones a day.
 const guests = new Guests(process.env.DEMO_FAUCET || undefined, unitsOf(process.env.DEMO_FAUCET_NEAR || '2') * YOCTO_PER_UNIT, Number(process.env.DEMO_FAUCET_PER_DAY || '10'));
 for (const guest of await guests.load()) pool.add(guest);
+// An agent for a visitor's own machine gets NEAR from the same faucet and its fee key from one
+// of DEMO_FEE_CODES. At most DEMO_OWN_PER_DAY a day, and one per visitor address.
+const gateway = process.env.NIGHTGATE_API_URL?.replace(/\/+$/, '');
+const feeCodes = (process.env.DEMO_FEE_CODES ?? '').split(',').map((code) => code.trim()).filter(Boolean);
+const own = new OwnAgents(feeCodes, Number(process.env.DEMO_OWN_PER_DAY || '5'), redeemCode, resolve(STATE_DIR, `own-agents-${network}.json`));
+await own.load();
+const ownOf = new Map<string, { account: string; at: number }>(); // visitor address -> the agent it got
 const seeAgents = (): void => void pool.refresh().catch((e: unknown) => console.error('reading the agents\' registrations:', e));
 seeAgents();
 // The agents that act by themselves beside the visitors. Each has a process of its own already.
@@ -104,8 +114,20 @@ const FONTS = new Map(
 );
 
 const JSON_TYPE = { 'content-type': 'application/json' };
+/** Whether one more agent for a visitor's own machine can be made now. */
+const ownOpen = (): boolean => gateway !== undefined && guests.pays && own.open;
 const json = (value: unknown): string => JSON.stringify(value, (_, v: unknown) => (typeof v === 'bigint' ? v.toString() : v));
 const active = (job: Job): boolean => job.state === 'queued' || job.state === 'running';
+
+/** Turns a fee code into a gateway key. Sent without a key of ours: with one the code would top that key up. */
+async function redeemCode(code: string): Promise<Redeemed> {
+  const res = await fetch(`${gateway}/codes/redeem`, { method: 'POST', headers: JSON_TYPE, body: JSON.stringify({ code }), signal: AbortSignal.timeout(30_000) });
+  const body = (await res.json().catch(() => ({}))) as { token?: unknown; validUntil?: unknown; error?: unknown };
+  if (res.ok && typeof body.token === 'string') return { key: body.token, ...(typeof body.validUntil === 'string' ? { validUntil: body.validUntil } : {}) };
+  // Unknown, redeemed before, expired or not a code: it never gives a key. Anything else may pass.
+  if ([404, 409, 410].includes(res.status) || (res.status === 400 && String(body.error).includes('not a giveaway code'))) return 'spent';
+  throw new Error(`the gateway did not redeem a fee code: HTTP ${res.status}`);
+}
 
 /** The visitor's address: the one the proxy in front names, else the socket's. */
 function addressOf(c: Context): string {
@@ -253,6 +275,7 @@ app.get('/api/public', (c) =>
       error: feed.error,
       readyAgents: pool.free(false),
       freshAgents: pool.free(true) + (guests.open ? 1 : 0),
+      ownAgents: ownOpen(),
       crowd: crowd.length,
       crowdMind: process.env.CROWD_MIND === 'claude' ? 'model' : 'rules',
       leastReward: nearOf(leastReward),
@@ -348,6 +371,30 @@ app.post('/api/agent/call', async (c) => {
   }
   session.actedAt = Date.now();
   return c.json({ job: start(session, tool, call.args, call.spends).id }, 202);
+});
+
+// An agent for the visitor's own machine: NEAR for the account of the key their browser made,
+// and a gateway key for its fees. A second try for the same account pays nothing twice.
+app.post('/api/own-agent', async (c) => {
+  const address = addressOf(c);
+  const account = ((await c.req.json().catch(() => undefined)) as { account?: unknown } | undefined)?.account;
+  if (typeof account !== 'string' || !/^[0-9a-f]{64}$/.test(account)) return c.json({ error: 'account must be the 64 hex digits of a NEAR public key' }, 400);
+  if (own.has(account)) return c.json({ error: 'This account has its agent already.' }, 409);
+  if (!own.waits(account)) {
+    if (!ownOpen()) return c.json({ error: 'No more agents are handed out today. Try again tomorrow.' }, 429);
+    const before = ownOf.get(address);
+    if (before && before.account !== account && Date.now() - before.at < DAY_MS) return c.json({ error: 'Your address got an agent today already.' }, 429);
+    ownOf.set(address, { account, at: Date.now() });
+  }
+  try {
+    const funding = await guests.fund({ id: 'own', account, env: {} });
+    await own.paid(account);
+    const fee = await own.key(account);
+    return c.json({ account, near: funding?.near, tx: funding?.tx, gateway, key: fee.key, validUntil: fee.validUntil });
+  } catch (e) {
+    console.error(`the agent of ${account} was not finished:`, e);
+    return c.json({ error: 'The agent could not be finished. Press the button again; nothing is paid twice.' }, 502);
+  }
 });
 
 app.post('/api/agent/end', (c) => {

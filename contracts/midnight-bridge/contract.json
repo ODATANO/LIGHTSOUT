@@ -1,0 +1,31 @@
+{
+  "name": "midnight-bridge",
+  "role": "bridge",
+  "privateStateId": "midnightBridgePrivateState",
+  "artifactPath": "managed/midnight-bridge/contract/index.js",
+  "zkConfigPath": "managed/midnight-bridge",
+  "circuits": [
+    "absorb",
+    "accept",
+    "approve",
+    "begin",
+    "burn",
+    "forget",
+    "know",
+    "known_root",
+    "mint",
+    "propose",
+    "prove_lock",
+    "prove_register"
+  ],
+  "pureCircuits": [
+    "burnId",
+    "wrappedDomain"
+  ],
+  "compactCompiler": "0.36.0",
+  "compactRuntime": "0.21.0",
+  "languageVersion": "0.28.0",
+  "digest": "ed32c1d4d09382107465667d6045c7e3cb10bbd2e644a8f559453f9c19d61fe9",
+  "zkAssetUrl": "https://github.com/ODATANO/LIGHTSOUT/releases/download/midnight-bridge-v0.1.0",
+  "zkAssetLayout": "flat"
+}
